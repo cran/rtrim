@@ -83,13 +83,15 @@ slope defined by \eqn{\alpha^* + \beta^*d_j} is returned.
 Finally, note that both the overall slope and the deviations can be written
 in multiplicative form as well.
 }
+
 \examples{
 data(skylark)
 z <- trim(count ~ site + time, data=skylark, model=2, overdisp=TRUE)
 coefficients(z)
 }
 \seealso{
-Other analyses: \code{\link{gof}}, \code{\link{index}},
+Other analyses: \code{\link{confint.trim}},
+  \code{\link{gof}}, \code{\link{index}},
   \code{\link{now_what}}, \code{\link{overall}},
   \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -99,4 +101,3 @@ Other analyses: \code{\link{gof}}, \code{\link{index}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
-

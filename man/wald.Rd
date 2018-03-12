@@ -28,7 +28,8 @@ z3 <- trim(count ~ site + time, data=skylark, model=3)
 wald(z3)
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -37,4 +38,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{summary.trim}}, \code{\link{totals}},
   \code{\link{trim}}, \code{\link{vcov.trim}}
 }
-

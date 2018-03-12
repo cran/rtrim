@@ -15,4 +15,3 @@
 print a count summary
 }
 \keyword{internal}
-

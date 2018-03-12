@@ -4,31 +4,32 @@
 \alias{vcov.trim}
 \title{Extract variance-covariance matrix from TRIM output}
 \usage{
-\method{vcov}{trim}(object, which = c("imputed", "model"), ...)
+\method{vcov}{trim}(object, which = c("imputed", "fitted"), ...)
 }
 \arguments{
 \item{object}{TRIM output structure (i.e., output of a call to \code{trim})}
 
 \item{which}{\code{[character]} Selector to distinguish between variance-covariance based on the
-imputed data (default), or the modelled data.}
+imputed counts (default), or the fitted counts.}
 
-\item{...}{Arguments to pass to or from other methods (currently unused)}
+\item{...}{Arguments to pass to or from other methods (currently unused; included for consistency with \code{\link[stats]{vcov}}).}
 }
 \value{
-a JxJ matrix, where J is the number of time points.
+a J x J matrix, where J is the number of years (or time-points).
 }
 \description{
 Extract variance-covariance matrix from TRIM output
 }
 \examples{
 data(skylark)
-z <- trim(count ~ site + time, data=skylark, model=2);
+z <- trim(count ~ site + time, data=skylark, model=3);
 totals(z)
-vcv1 <- vcov(z)       # Use imputed data
-vcv2 <- vcov(z,"model") # Use modelled data
+vcv1 <- vcov(z)          # Use imputed data
+vcv2 <- vcov(z,"fitted") # Use fitted data
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -37,4 +38,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{summary.trim}}, \code{\link{totals}},
   \code{\link{trim}}, \code{\link{wald}}
 }
-

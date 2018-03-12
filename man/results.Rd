@@ -11,7 +11,7 @@ results(z)
 }
 \value{
 A \code{data.frame}, one row per site-time combination, with columns for
-site, time, observed counts, modelled counts and imputed counts.
+site, year, month (optionally), observed counts, modelled counts and imputed counts.
 Missing observations are marked as \code{NA}.
 }
 \description{
@@ -23,7 +23,8 @@ z <- trim(count ~ site + time, data=skylark, model=2);
 out <- results(z)
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -33,4 +34,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
-

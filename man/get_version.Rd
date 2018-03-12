@@ -23,4 +23,3 @@ Other parse_output: \code{\link{get_coef}},
   \code{\link{read_tof}}, \code{\link{read_vcv}}
 }
 \keyword{internal}
-

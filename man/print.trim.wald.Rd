@@ -13,4 +13,3 @@
 Print an object of class trim.wald
 }
 \keyword{internal}
-

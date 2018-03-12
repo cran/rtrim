@@ -1,25 +1,29 @@
 # ##################################################### Stepwise refinement ####
+#
+# #TODO: use premove/penter in trim() calls
 
 # =============================================== Main refinement prodecure ====
 
 #' TRIM stepwise refinement
 #'
 #' @param count a numerical vector of count data.
-#' @param site.id a numerical vector time points for each count data point.
-#' @param time.id a numerical vector time points for each count data point.
-#' @param covars an optional list of covariates
-#' @param model a model type selector
-#' @param serialcor a flag indication of autocorrelation has to be taken into account.
-#' @param overdisp a flag indicating of overdispersion has to be taken into account.
+#' @param site a vector (numerical or factor) of site identifiers for each count data point.
+#' @param year a numerical vector of annual time points for each count data point.
+#' @param month an optional numerical vector of monthly time points.
+#' @param weights an optional numerical vector of weights.
+#' @param covars an optional list of covariates.
+#' @param model a model type selector.
 #' @param changepoints a numerical vector change points (only for Model 2)
 #'
-#' @return a list of class \code{trim}, that contains all output, statistiscs, etc.
+#' @param premove threshold probability for removal of parameters.
+#' @param penter threshold probability for re-introduction of parameters.
+#'
+#' @return a list of class \code{trim}, that opcontains all output, statistiscs, etc.
 #'   Usually this information is retrieved by a set of postprocessing functions
 #'
 #' @keywords internal
-trim_refine <- function(count, site.id, time.id, covars=list(),
-                        model=2, serialcor=FALSE, overdisp=FALSE,
-                        changepoints=integer(0),weights=numeric(0))
+trim_refine <- function(count, site, year, month, weights, covars,
+                        model, changepoints, ..., premove=0.2, penter=0.15)
 {
   org_cp = changepoints
   ncp <- length(org_cp)
@@ -27,59 +31,67 @@ trim_refine <- function(count, site.id, time.id, covars=list(),
 
   # Always start with an estimation using all proposed changepoints
   cur_cp <- org_cp
-  z <- trim_workhorse(count, site.id, time.id, covars, model, serialcor, overdisp, cur_cp, weights)
+  z <- trim_workhorse(count, site, year, month, weights, covars,
+                      model, changepoints=org_cp, ...)
 
   # # Hack: remove all except the first changepoints
   # n <- length(org_cp)
   # active[2:n] <- FALSE
   # cur_cp <- org_cp[active]
-  # z <- trim_workhorse(count, site.id, time.id, covars, model, serialcor, overdisp, cur_cp)
+  # z <- trim_workhorse(count, site.id, year, covars, model, serialcor, overdisp, cur_cp)
 
   for (iter in 1:100) {
     # Phase 1: can one of the changepoints be removed?
-    # (Only applies for 2 or more changepoints)
-    if (sum(active)>=2) {
+    if (sum(active)>0) {
       W <- wald(z)
       max_p = max(W$dslope$p)
-      if (max_p > 0.2) {
+      if (max_p > premove) {
         i = which.max(W$dslope$p)
         del_cp <- cur_cp[i]
         del_p  <- max_p
-        rprintf("\n>>> Deleted changepoint %d (p = %.4f) <<<\n\n", del_cp, del_p)
         # remove from original changepoints
         i = which(org_cp == del_cp)
         active[i] = FALSE
         removed <- TRUE
+        # report
+        rprintf("\n>>> Deleted changepoint %d (p = %.4f); %d changepoint(s) left. <<<\n\n", del_cp, del_p, sum(active))
+        # Collapse model 2 to 1?
+        if (sum(active)==0) {
+          rprintf(">>> Collapsing to Model 1 <<<\n")
+          # browser()
+        }
       } else removed <- FALSE
     } else removed <- FALSE
 
     # If a changepoint has been removed, we'll need to re-estimate the model
     if (removed) {
-      cur_cp = org_cp[active]
-      z <- trim_workhorse(count, site.id, time.id, covars, model, serialcor, overdisp, cur_cp, weights)
+      cur_cp = org_cp[active] # collapes to numeric(0) if no active changepoints, as intended
+      z <- trim_workhorse(count, site, year, month, weights, covars,
+                          model, changepoints=cur_cp, ...)
     }
 
     # Phase 2: try to re-insert previously removed changepoints
     alpha <- z$alpha
     beta  <- z$beta
     nacp <- sum(active) # Number of active changpoints
+    beta <- matrix(z$beta, nacp) # vector matrix; columns are covariates
     p <- numeric(ncp)
     for (i in 1:ncp) if (active[i]==FALSE) {
       # deleted changepoints
-      num.active.before = ifelse(i==1, 0, sum(active[1:(i-1)]))
-      num.active.after  = ifelse(i==ncp, 0, sum(active[(i+1):ncp]))
+      num.active.before <- ifelse(i==1, 0, sum(active[1:(i-1)]))
+      num.active.after  <- ifelse(i==ncp, 0, sum(active[(i+1):ncp]))
       # cast beta in a matrix with beta0 in first column, covars in other columns
-      beta_t <- matrix(as.vector(beta), nacp)
       if (num.active.before==0) {
-        stop("Should never happen")
+        beta_t    <- rbind(0.0, beta) # add no-trend top row
+        # stop("Should never happen")
       } else if (num.active.after==0) {
-        beta_last = beta_t[num.active.before, ,drop=FALSE]
-        beta_t = rbind(beta_t, beta_last)
+        beta_last <- beta[num.active.before, ,drop=FALSE] # last before test position; corresponds to Jeroen's '0'
+        beta_t    <- rbind(beta, beta_last)
       } else {
-        beta1 = beta[1:num.active.before, ,drop=FALSE]
-        beta_last = beta_t[num.active.before, ,drop=FALSE]
-        beta2 = beta[(nacp-num.active.after+1):nacp, ,drop=FALSE]
-        beta_t = rbind(beta1, beta_last, beta2)
+        beta1     <- beta[1:num.active.before, ,drop=FALSE]
+        beta_last <- beta[num.active.before, ,drop=FALSE]
+        beta2     <- beta[(nacp-num.active.after+1):nacp, ,drop=FALSE]
+        beta_t    <- rbind(beta1, beta_last, beta2)
       }
       beta_t <- matrix(beta_t) # Reshape into column vector
       active_t <- active # Create list of current (test) changepoints
@@ -92,18 +104,19 @@ trim_refine <- function(count, site.id, time.id, covars=list(),
     # A changepoint is re-inserted if the minimum signficance is lower than a
     # specified threshold
     min_p <- min(p)
-    if (min_p < 0.15) {
-      i = which.min(p)
+    if (min_p < penter) {
+      i <- which.min(p)
       active[i] <- TRUE
       ins_cp <- org_cp[i]
-      rprintf("\n>>> Re-inserted changepoint %d (p=%.4f) <<<\n\n", ins_cp, min_p)
+      rprintf("\n>>> Re-inserted changepoint %d (p=%.4f); now %d changepoints. <<<\n\n", ins_cp, min_p, sum(active))
       added <- TRUE
     } else added <- FALSE
 
     # If a changepoint has been re-inserted, we'll need to re-estimate the model
     if (added) {
-      cur_cp = org_cp[active]
-      z <- trim_workhorse(count, site.id, time.id, covars, model, serialcor, overdisp, cur_cp, weights)
+      cur_cp <- org_cp[active]
+      z <- trim_workhorse(count, site, year, month, weights, covars,
+                          model, changepoints=cur_cp, ...)
     }
 
     # Finished refinement?

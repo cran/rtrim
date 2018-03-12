@@ -15,4 +15,3 @@
 print a trimcommand object
 }
 \keyword{internal}
-

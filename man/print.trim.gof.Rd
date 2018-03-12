@@ -13,4 +13,3 @@
 Print method for \code{trim.gof}
 }
 \keyword{internal}
-

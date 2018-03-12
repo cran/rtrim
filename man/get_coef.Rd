@@ -28,4 +28,3 @@ Other parse_output: \code{\link{get_estimation_method}},
   \code{\link{read_vcv}}
 }
 \keyword{internal}
-

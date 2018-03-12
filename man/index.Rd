@@ -2,9 +2,10 @@
 % Please edit documentation in R/trim_index.R
 \name{index}
 \alias{index}
-\title{Extract time-indices from trim output}
+\title{Extract time-indices from TRIM output.}
 \usage{
-index(x, which = c("imputed", "fitted", "both"), covars = FALSE, base = 1)
+index(x, which = c("imputed", "fitted", "both"), covars = FALSE, base = 1,
+  level = NULL)
 }
 \arguments{
 \item{x}{an object of class \code{\link{trim}}}
@@ -14,10 +15,16 @@ the fitted model, or both.}
 
 \item{covars}{\code{[logical]} Switch to compute indices for covariate categories as well.}
 
-\item{base}{\code{[integer|numeric]} Base time point, for which the index is 1. If the data contains J time points,
-the base time point can be given in the interval 1...J, or,
+\item{base}{\code{[integer|numeric]} One or more base time point, used as as reference for the index.
+If just a single number is given, the time total of the correspondong time point will be uses as  reference.
+If a range of numbers is given, the average of the corresponding time totals will be used as reference.
+The base time points can be given in the interval 1...J, or,
 if the time points are proper years, say year1...yearn, the base year can be given.
 So, if the data range 2000...2016, \code{base=2} and \code{base=2001} are equivalent.}
+
+\item{level}{\code{[numeric]} the confidence interval required.
+Must be in the range 0 to 1. A value of 0.95 results in 95\% confidence intervals.
+The default value of NULL results in no confidence interval to be computed.}
 }
 \value{
 A data frame containing indices and their uncertainty expressed as
@@ -29,7 +36,11 @@ A data frame containing indices and their uncertainty expressed as
   marked as covariate `Overall' and category 0.
 }
 \description{
-Extract time-indices from trim output
+Indices are obtained by dividing the modelled or imputed time totals by a reference value.
+Most commonly, the time totals for the first time point are used as reference.
+As a result, the index value for this first time point will be 1.0, with a standard error of 0.0 by definition.
+Alternatively, a range of time points can be used as reference. In this case, the mean time totals for this range will be used as
+reference, and the standard errors will be larger than 0.0.
 }
 \examples{
 
@@ -41,12 +52,18 @@ index(z, "both")
 # Extract standard errors for the imputed data
 SE <- index(z,"imputed")$se_mod
 # Include covariates
+skylark$Habitat <- factor(skylark$Habitat) # hack
 z <- trim(count ~ site + time + Habitat, data=skylark, model=2)
 ind <- index(z, covars=TRUE)
 plot(ind)
+# Use alternative base year
+index(z, base=3)
+# Use average of first 5 years as reference for indexing
+index(z, base=1:5)
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{now_what}}, \code{\link{overall}},
   \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -56,4 +73,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
-

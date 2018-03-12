@@ -4,17 +4,17 @@
 \alias{count_summary}
 \title{Compute a summary of counts}
 \usage{
-count_summary(x, count.id = "count", site.id = "site", time.id = "time",
-  eps = 1e-08)
+count_summary(x, count_col = "count", site_col = "site",
+  year_col = "year", eps = 1e-08)
 }
 \arguments{
 \item{x}{A \code{data.frame} with annual counts per site.}
 
-\item{count.id}{\code{[character|numeric]}  index of the column containing the counts}
+\item{count_col}{\code{[character|numeric]}  index of the column containing the counts}
 
-\item{site.id}{\code{[character|numeric]}  index of the column containing the site id's}
+\item{site_col}{\code{[character|numeric]}  index of the column containing the site ID's}
 
-\item{time.id}{\code{[character|numeric]}  index of the column containing the time codes}
+\item{year_col}{\code{[character|numeric]}  index of the column containing the year}
 
 \item{eps}{\code{[numeric]} Numbers smaller then \code{eps} are treated a zero.}
 }
@@ -35,4 +35,3 @@ count_summary(skylark)
 s <- count_summary(skylark)
 s$zero_counts # obtain number of zero counts
 }
-

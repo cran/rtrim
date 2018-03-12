@@ -4,33 +4,35 @@
 \alias{trim_refine}
 \title{TRIM stepwise refinement}
 \usage{
-trim_refine(count, site.id, time.id, covars = list(), model = 2,
-  serialcor = FALSE, overdisp = FALSE, changepoints = integer(0),
-  weights = numeric(0))
+trim_refine(count, site, year, month, weights, covars, model, changepoints, ...,
+  premove = 0.2, penter = 0.15)
 }
 \arguments{
 \item{count}{a numerical vector of count data.}
 
-\item{site.id}{a numerical vector time points for each count data point.}
+\item{site}{a vector (numerical or factor) of site identifiers for each count data point.}
 
-\item{time.id}{a numerical vector time points for each count data point.}
+\item{year}{a numerical vector of annual time points for each count data point.}
 
-\item{covars}{an optional list of covariates}
+\item{month}{an optional numerical vector of monthly time points.}
 
-\item{model}{a model type selector}
+\item{weights}{an optional numerical vector of weights.}
 
-\item{serialcor}{a flag indication of autocorrelation has to be taken into account.}
+\item{covars}{an optional list of covariates.}
 
-\item{overdisp}{a flag indicating of overdispersion has to be taken into account.}
+\item{model}{a model type selector.}
 
 \item{changepoints}{a numerical vector change points (only for Model 2)}
+
+\item{premove}{threshold probability for removal of parameters.}
+
+\item{penter}{threshold probability for re-introduction of parameters.}
 }
 \value{
-a list of class \code{trim}, that contains all output, statistiscs, etc.
+a list of class \code{trim}, that opcontains all output, statistiscs, etc.
   Usually this information is retrieved by a set of postprocessing functions
 }
 \description{
 TRIM stepwise refinement
 }
 \keyword{internal}
-

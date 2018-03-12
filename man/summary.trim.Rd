@@ -30,7 +30,8 @@ summary(z)
 \seealso{
 \code{\link{trim}}
 
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -39,4 +40,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
-

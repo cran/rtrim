@@ -2,16 +2,16 @@
 % Please edit documentation in R/data_checks.R
 \name{check_observations}
 \alias{check_observations}
-\alias{check_observations.character}
 \alias{check_observations.data.frame}
 \alias{check_observations.trimcommand}
+\alias{check_observations.character}
 \title{Check whether there are sufficient observations to run a model}
 \usage{
 check_observations(x, ...)
 
-\method{check_observations}{data.frame}(x, model, covars = list(),
-  changepoints = numeric(0), time.id = "time", count.id = "count",
-  eps = 1e-08, ...)
+\method{check_observations}{data.frame}(x, model, count_col = "count",
+  year_col = "year", month_col = NULL, covars = character(0),
+  changepoints = numeric(0), eps = 1e-08, ...)
 
 \method{check_observations}{trimcommand}(x, ...)
 
@@ -24,13 +24,15 @@ check_observations(x, ...)
 
 \item{model}{\code{[numeric]} Model 1, 2 or 3?}
 
+\item{count_col}{\code{[character|numeric]} column index of the counts in \code{x}}
+
+\item{year_col}{\code{[character|numeric]} column index of years or time points in \code{x}}
+
+\item{month_col}{\code{[character|numeric]} optional column index of months in \code{x}}
+
 \item{covars}{\code{[character|numeric]} column index of covariates in \code{x}}
 
 \item{changepoints}{\code{[numeric]} Changepoints (model 2 only)}
-
-\item{time.id}{\code{[character|numeric]} column index of time points in \code{x}}
-
-\item{count.id}{\code{[character|numeric]} column index of the counts in \code{x}}
 
 \item{eps}{\code{[numeric]} Numbers whose absolute magnitude are lesser than \code{eps} are considered zero.}
 }
@@ -65,4 +67,3 @@ Other modelspec: \code{\link{read_tcf}},
   \code{\link{read_tdf}}, \code{\link{set_trim_verbose}},
   \code{\link{trimcommand}}, \code{\link{trim}}
 }
-

@@ -5,58 +5,83 @@
 \alias{trim.data.frame}
 \alias{trim.formula}
 \alias{trim.trimcommand}
-\title{Estimate TRIM model parameters}
+\title{Estimate TRIM model parameters.}
 \usage{
-trim(x, ...)
+trim(object, ...)
 
-\method{trim}{trimcommand}(x, ...)
+\method{trim}{data.frame}(object, count_col = "count", site_col = "site",
+  year_col = "year", month_col = NULL, weights_col = NULL,
+  covar_cols = NULL, model = 2, changepoints = ifelse(model == 2, 1L,
+  integer(0)), overdisp = FALSE, serialcor = FALSE, autodelete = TRUE,
+  stepwise = FALSE, covin = list(), ...)
 
-\method{trim}{data.frame}(x, count.id = "count", site.id = "site",
-  time.id = "time", covars = character(0), model = 2,
-  weights = numeric(0), serialcor = FALSE, overdisp = FALSE,
-  changepoints = integer(0), stepwise = FALSE, autodelete = FALSE, ...)
+\method{trim}{formula}(object, data = NULL, weights = NULL, ...)
 
-\method{trim}{formula}(x, data, model = 2, weights = numeric(0),
-  serialcor = FALSE, overdisp = FALSE, changepoints = integer(0),
-  stepwise = FALSE, autodelete = FALSE, ...)
+\method{trim}{trimcommand}(object, ...)
 }
 \arguments{
-\item{x}{a \code{\link{trimcommand}}, a \code{data.frame}, or a \code{formula}
-If \code{x} is a \code{formula}, the dependent variable (left-hand-side)
+\item{object}{Either a \code{data.frame}, a \code{formula} or a \code{\link{trimcommand}}.
+If \code{object} is a \code{formula}, the dependent variable (left-hand-side)
 is treated as the 'counts' variable. The first and second independent variable
 are treated as the 'site' and 'time' variable, \bold{in that specific order}. All
 other variables are treated as covariates.}
 
-\item{...}{Currently unused}
+\item{...}{More parameters, see below in the details}
 
-\item{count.id}{\code{[character]} name of the column holding species counts}
+\item{count_col}{\code{[character]} name of the column holding species counts}
 
-\item{site.id}{\code{[character]} name of the column holding the site id}
+\item{site_col}{\code{[character]} name of the column holding the site id}
 
-\item{time.id}{\code{[character]} name of the column holding the time of counting}
+\item{year_col}{\code{[character]} name of the column holding the time of counting}
 
-\item{covars}{\code{[character]} name(s) of column(s) holding covariates}
+\item{month_col}{\code{[character]} optional name of the column holding the season of counting}
+
+\item{weights_col}{\code{[numeric]} Optional vector of site weights. The length of}
+
+\item{covar_cols}{\code{[character]} name(s) of column(s) holding covariates}
 
 \item{model}{\code{[numeric]} TRIM model type 1, 2, or 3.}
 
-\item{weights}{\code{[numeric]} Optional vector of site weights. The length of
-\code{weights} must be equal to the number of rows in the data.}
-
-\item{serialcor}{\code{[logical]} Take serial correlation into account (See `Estimation details')}
+\item{changepoints}{\code{[numeric]} Indices for changepoints (`Models').}
 
 \item{overdisp}{\code{[logical]} Take overdispersion into account (See `Estimation options').}
 
-\item{changepoints}{\code{[numeric]} Indices for changepoints (`Models').}
-
-\item{stepwise}{\code{[logical]} Perform stepwise refinement of changepoints.}
+\item{serialcor}{\code{[logical]} Take serial correlation into account (See `Estimation details')}
 
 \item{autodelete}{\code{[logical]} Auto-delete changepoints when number of observations is too small. (See
 `Demands on data').}
 
-\item{data}{\code{[data.frame]} Data containing at least counts, sites, and times}
+\item{stepwise}{\code{[logical]} Perform stepwise refinement of changepoints.}
+
+\item{covin}{a list of variance-covariance matrices; one per pseudo-site.}
+
+\item{data}{\code{[data.frame]} Data frame containing at least counts, sites, and times}
+
+\item{weights}{\code{[character]} name of the column in \code{data} which respresents weights (optional)}
 }
 \description{
-Compute TRIM model parameters.
+Given some count observations, estimate a TRIM model and use these to impute the data set if nescessary.
+}
+\details{
+All versions of \code{trim} support additional 'experts only' arguments:
+
+\describe{
+\item{\code{verbose}}{Logical switch to temporarily enable verbose output. (use \code{option(trim_verbose=TRUE)}) for permanent verbosity.}
+\item{\code{constrain_overdisp}}{Numerical value to control overdispersion.
+  \itemize{
+  \item A value in the range 0..1 uses a Chi-squared oulier detection method.
+  \item A value >1 uses Tukey's Fence.
+  \item A value of 1.0 (which is the default) results in unconstrained overdispersion.
+  }
+  See vigenette `Taming overdispersion' for more information.}
+\item{\code{conv_crit}}{Convergence criterion.
+  Used within the iterative emodel estimation algorithm.
+  The default value is \code{1e-5}.).
+  May be set to higher values in case models don't converge.}
+\item{\code{max_iter}}{Number of iterations. Default value is \code{200}. May be set to higher values in case models don't converge.}
+\item{\code{premove}}{Probability of removal of changepoints (default value: 0.2). Parameter used in stepwise refinement of models. See the vignette 'Models and statistical methods in rtrim'.}
+\item{\code{penter}}{Probability of re-entering of changepoints (default value: 0.15). Similar use as \code{premove}.}
+}
 }
 \section{Models}{
 
@@ -89,17 +114,17 @@ remove changepoints where the slope does not change significantly.
 
 In \bold{Model 3}, the imputed values are modeled as
 
-\eqn{\ln\mu_{ij}=\alpha_i + \gamma_j},
+\eqn{\ln\mu_{ij}=\alpha_i + \beta_j},
 
-where \eqn{\gamma_j} is the deviatiation of log-counts at time \eqn{j},
+where \eqn{\beta_j} is the deviatiation of log-counts at time \eqn{j},
 averaged over all sites. To make this model identifiable, the value of
-\eqn{\gamma_1=0} by definition. Model 3 can be shown to be equivalent to
+\eqn{\beta_1=0} by definition. Model 3 can be shown to be equivalent to
 Model 2 with a changepoint at every time point. Using a
 \code{\link[=wald.trim]{wald}} test, one can estimate whether the collection
-of deviations \eqn{\gamma_i} make the model differ significantly from an
+of deviations \eqn{\beta_i} make the model differ significantly from an
 overall linear trend (Model 2 without changepoints).
 
-The parameters \eqn{\alpha_i}, \eqn{\beta} and \eqn{\gamma_j} are referred to
+The parameters \eqn{\alpha_i} and \eqn{\gamma_j} are referred to
 as the \emph{additive representation} of the coefficients. Once computed,
 they can be represented and extracted in several representations, using the
 \code{\link[=coef.trim]{coefficients}} function. (See also the examples
@@ -110,7 +135,29 @@ Other model parameters can be extracted using functions such as
 or \code{\link{totals}}. Refer to the `See also' section for an overview.
 }
 
-\section{{Using covariates}}{
+\section{Using yearly and monthly counts}{
+
+
+In many data sets will use use only yearly count data, in which case the
+time \eqn{j} will reflect the year number.
+An extension of \code{trim} is to use monthly (or any other sub-yearly) count data,
+in combination with index computations on the yearly time scale.
+
+In this case, counts are given as \eqn{f_{i,j,m}} with \eqn{m=1,2,\ldots,M} the month number.
+As before, \eqn{\mu_{i,j,m}} will be imputed in case of missing counts.
+
+The contibution of month factors to the model is always similar to the way year factors are used in Model 3,
+that is,
+
+\eqn{\ln\mu_{i,j,m} = \alpha_i + \beta\times(j-1) + \gamma_m}
+for Model 2, and
+ \eqn{\ln\mu_{i,j,m} = \alpha_i + \beta_j + \gamma_m}
+for Model 3.
+
+For the same reason why \eqn{\beta_1=0} for Model 3, \eqn{\gamma_1=0} in case of monthly parameters.
+}
+
+\section{Using covariates}{
 
 
 In the basic case of Models 2 and 3, the growth parameter \eqn{\beta} does
@@ -134,12 +181,13 @@ area. The \code{\link[=coef.trim]{coefficients}} function will report every
 individual value of \eqn{\beta}. With a \code{\link[=wald.trim]{wald}} test,
 the significance of contributions of covariates can be tested.
 
-For \bold{Model 3 with covariates} the parameter \eqn{\gamma_j} is replaced by
 
-\eqn{\gamma_{j0} + \sum_{k=1}^Kz_{ijk}\gamma_{jk}.}
+For \bold{Model 3 with covariates} the parameter \eqn{\beta_j} is replaced by
 
-Again, the \eqn{\gamma_{j0}} are referred to as baseline parameters and the
-\eqn{\gamma_{jk}} record mean differences in log-counts within a set of sites
+\eqn{\beta_{j0} + \sum_{k=1}^Kz_{ijk}\beta_{jk}.}
+
+Again, the \eqn{\beta_{j0}} are referred to as baseline parameters and the
+\eqn{\beta_{jk}} record mean differences in log-counts within a set of sites
 with equal values for the covariates. All coefficients can be extracted with
 \code{\link[=coef.trim]{coefficients}} and the significance of covariates can
 be investigated with the \code{\link[=wald.trim]{wald}} test.
@@ -184,6 +232,7 @@ In particular
   for each time point.}
 \item{For model 3 with covariates there must be at least one observation for
   every value of each covariate, at each time point.}
+\item{For montly data, there must be at least one observation for every month.}
 }
 
 The function \code{\link{check_observations}} identifies cases where too few
@@ -192,6 +241,7 @@ observations are present to compute a model. Setting the option
 such that at each time piece sufficient counts are available to estimate the
 model.
 }
+
 \examples{
 data(skylark)
 m <- trim(count ~ site + time, data=skylark, model=2)
@@ -202,10 +252,9 @@ coefficients(m)
 # set up some random weights (one for each site)
 w <- runif(55, 0.1, 0.9)
 # match weights to sites
-weights <- w[skylark$site]
+skylark$weights <- w[skylark$site]
 # run model
-m <- trim(count ~ site + time, data=skylark, model=3, weights=weights)
-
+m <- trim(count ~ site + time, data=skylark, weights="weights", model=3)
 
 # An example using change points, a covariate, and overdispersion
 # 1 is added as cp automatically
@@ -217,9 +266,12 @@ wald(m)
 plot(overall(m))
 }
 \seealso{
-\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users}, \href{../doc/Skylark_example.html}{TRIM by example}
+\href{../doc/Skylark_example.html}{rtrim by example} for a gentle introduction,
+  \href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users} for users of the classic Delphi-based TRIM implementation,
+  and \href{../doc/rtrim_2_extensions.html}{rtrim 2 extensions} for the major changes from rtrim v.1 to rtrim v.2
 
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -232,4 +284,3 @@ Other modelspec: \code{\link{check_observations}},
   \code{\link{read_tcf}}, \code{\link{read_tdf}},
   \code{\link{set_trim_verbose}}, \code{\link{trimcommand}}
 }
-

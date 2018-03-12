@@ -15,4 +15,3 @@
 print a 'trim' object
 }
 \keyword{internal}
-

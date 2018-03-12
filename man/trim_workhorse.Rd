@@ -4,37 +4,41 @@
 \alias{trim_workhorse}
 \title{TRIM workhorse function}
 \usage{
-trim_workhorse(count, site.id, time.id, covars = data.frame(), model = 2,
-  serialcor = FALSE, overdisp = FALSE, changepoints = integer(0),
-  weights = numeric(0), covin = list(), conv_crit = 1e-05,
-  max_iter = 200, max_sub_step = 7, soft = FALSE, debug = FALSE)
+trim_workhorse(count, site, year, month, weights, covars, model, changepoints,
+  overdisp, serialcor, autodelete, stepwise, covin = list(),
+  constrain_overdisp = 1, conv_crit = 1e-05, max_iter = 200,
+  debug = FALSE)
 }
 \arguments{
 \item{count}{a numerical vector of count data.}
 
-\item{site.id}{a numerical vector time points for each count data point.}
+\item{site}{a numerical vector time points for each count data point.}
 
-\item{time.id}{an numerical vector time points for each count data point.}
+\item{year}{an numerical vector time points for each count data point.}
+
+\item{month}{vector of month data.}
+
+\item{weights}{a numerical vector of weights.}
 
 \item{covars}{an optional data frame with covariates}
 
 \item{model}{a model type selector}
 
-\item{serialcor}{a flag indication of autocorrelation has to be taken into account.}
+\item{changepoints}{a numerical vector change points (only for Model 2)}
 
 \item{overdisp}{a flag indicating of overdispersion has to be taken into account.}
 
-\item{changepoints}{a numerical vector change points (only for Model 2)}
+\item{serialcor}{a flag indication of autocorrelation has to be taken into account.}
 
-\item{weights}{a numerical vector of weights.}
+\item{covin}{a list of variance-covariance matrices; one per pseudo-site.}
 
-\item{covin}{...}
+\item{constrain_overdisp}{control constraining overdispersion}
 
 \item{conv_crit}{convergence criterion.}
 
 \item{max_iter}{maximum number of iterations allowed.}
 
-\item{soft:}{specifies if trim on error returns an error code (TRUE) or just stops with a message (FALSE)}
+\item{max_beta}{maximum value for beta parameters}
 }
 \value{
 a list of class \code{trim}, that contains all output, statistiscs, etc.
@@ -44,4 +48,3 @@ a list of class \code{trim}, that contains all output, statistiscs, etc.
 TRIM workhorse function
 }
 \keyword{internal}
-

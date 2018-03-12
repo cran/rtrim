@@ -262,11 +262,13 @@ test_that("testing skylark-2a",{
             , serialcor=TRUE, overdisp = TRUE, model=2
             , changepoints=1:7, autodelete=FALSE)
   to <- read_tof("outfiles/skylark-2a.out")
+
   # formula-data interface
   trimtest(m,to,tc)
+
   # data-formula interface: note: nothing should be auto-deleted.
-  m <- trim(dat, count.id="count", site.id="site", time.id="time"
-            , covars="Habitat"
+  m <- trim(dat, count_col="count", site_col="site", year_col="time"
+            , covar_cols="Habitat"
             , serialcor=TRUE, overdisp = TRUE, model=2
             , changepoints=1:7,autodelete=TRUE)
   trimtest(m,to,tc)
@@ -275,12 +277,13 @@ test_that("testing skylark-2a",{
 })
 
 context("Error handling")
+
 test_that("invalid model specs",{
   data(skylark)
   expect_error(
     trim(count ~ site + time, data=skylark, model=3
          ,changepoints=c(3,5),stepwise = TRUE)
-    , regexp = "Stepwise removal only works for model 2"
+    , regexp = "Stepwise refinement requires model 2"
   )
 
   expect_error(
@@ -291,7 +294,15 @@ test_that("invalid model specs",{
 
 })
 
-
+test_that("Zero expected count", {
+  load("testdata/131183.RData")
+  suppressWarnings(
+    expect_error(
+      trim(count ~ site + year, data=df, model=2, overdisp=TRUE, serialcor=TRUE, changepoints="all", autodelete=TRUE),
+           regexp = "Zero expected value at year 2014"
+      )
+    )
+})
 
 test_that("tcf checker",{
 
@@ -333,5 +344,6 @@ test_that("results",{
   m <- trim(count ~ site + time, data=skylark, model=2)
   out <- as.data.frame(results(m))
   out$site<- as.integer(as.character(out$site))
-  expect_equal(out, read.csv("outfiles/skylark-model2-f.csv"))
+  target <- read.csv("outfiles/skylark-model2-f.csv")
+  expect_equal(out, target)
 })

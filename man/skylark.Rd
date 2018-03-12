@@ -37,4 +37,3 @@ and covariates as factors. The \bold{\code{skylark2}} data set looks as follows.
  \code{Weight}      \tab \code{numeric} \tab Site weight
 }
 }
-

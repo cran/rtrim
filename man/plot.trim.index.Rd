@@ -2,32 +2,57 @@
 % Please edit documentation in R/trim_index.R
 \name{plot.trim.index}
 \alias{plot.trim.index}
-\title{Plot time-indices from trim output}
+\title{Plot time-indices from trim output.}
 \usage{
-\method{plot}{trim.index}(x, covar = "auto", ...)
+\method{plot}{trim.index}(x, ..., names = NULL, covar = "auto",
+  xlab = "auto", ylab = "Index", pct = FALSE, band = "se")
 }
 \arguments{
 \item{x}{an object of class \code{trim.index}, as resulting from e.g. a call to \code{\link{index}}.}
+
+\item{...}{additional \code{trim.index} objects, or parameters that will be passed on to \code{\link[graphics]{plot}}.}
+
+\item{names}{optional character vector with names for the various series.}
 
 \item{covar}{\code{[character]} the name of a covariate to include in the plot.
 If set to \code{"auto"} (the default), the first (or only) covariate is used.
 If set to \code{"none"} plotting of covariates is suppressed and only the overall index is shown.}
 
-\item{...}{Further options passed to \code{\link[graphics]{plot}}}
+\item{xlab}{a title for the x-axis. The default value is "auto" will be changed to "Time Point" if the time ID's start at 1, and to "Year" otherwise.}
+
+\item{ylab}{a title for the y-axis. The default value is "Index".}
+
+\item{pct}{Switch to show the index values as percent instead as fraction (i.e., for the base year it will be 100 instead of 1)}
+
+\item{band}{Defines if the uncertainty band will be plotted using standard errors ("se") or confidence intervals ("ci").}
 }
 \description{
-Plot time-indices from trim output
+Uncertainty ranges exressed as standard errors are always plotted.
+Confidence intervals are plotted when they are present in the \code{trim.index} object, i.e. when requested for in the call to \code{\link{index}}.
 }
 \examples{
 
-data(skylark)
-z <- trim(count ~ site + time + Habitat, data=skylark, model=2)
+# Simple example
+data(skylark2)
+z <- trim(count ~ site + year, data=skylark2, model=3)
+idx <- index(z)
+plot(idx)
+
+# Example with user-modified title, and different y-axis scaling
+plot(idx, main="Skylark", pct=TRUE)
+
+# Using covariates:
+z <- trim(count ~ site + year + habitat, data=skylark2, model=3)
 idx <- index(z, covars=TRUE)
-plot(idx, covar="Habitat", main="Skylark")
+plot(idx)
+
+# Suppressing the plotting of covariate indices:
+plot(idx, covar="none")
 
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.overall}}, \code{\link{results}},
@@ -35,5 +60,7 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{summary.trim}}, \code{\link{totals}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
-}
 
+Other graphical post-processing: \code{\link{heatmap}},
+  \code{\link{plot.trim.totals}}
+}

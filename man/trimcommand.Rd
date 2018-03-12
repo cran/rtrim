@@ -47,6 +47,7 @@ reading a legacy TRIM command file.
 \item{ \code{covin} \code{[logical]} Whether the covariance matrix is read in.}
 }
 }
+
 \seealso{
 \href{../doc/Working_with_tcf.html}{Working with TRIM command files and TRIM data files}.
 
@@ -54,4 +55,3 @@ Other modelspec: \code{\link{check_observations}},
   \code{\link{read_tcf}}, \code{\link{read_tdf}},
   \code{\link{set_trim_verbose}}, \code{\link{trim}}
 }
-

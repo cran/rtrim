@@ -4,12 +4,13 @@
 #'
 #' The overal slope represents the total growth over the piecewise linear model.
 #'
-#'
 #' @param x an object of class \code{\link{trim}}.
 #' @param which \code{[character]} Choose between \code{"imputed"} or
 #'   \code{"fitted"} counts.
 #' @param changepoints \code{[numeric]} Change points for which to compute the overall slope,
 #'   or "model", in which case the changepoints from the model are used (if any)
+#' @param bc \code{[logical]} Flag to set backwards compatability with TRIM with respect to trend interpretation.
+#'   Defaults to \code{FALSE}.
 #'
 #' @section Details:
 #'
@@ -19,9 +20,12 @@
 #' The values for \code{changepoints} do not depend on \code{changepoints} that were used when
 #' specifying the \code{trim} model (See also the example below).
 #'
+#' Note that the original TRIM erroneously assumed that the estimated overall trend
+#' magnitude is t-distributed, while in fact it is normally distributed, which is being used within rtrim.
+#' The option \code{bc=TRUE} can be set to force backward compability, for e.g. comparison purposes.
 #'
 #' @return a list of class \code{trim.overall} containing, a.o., overall slope
-#'   coefficients (\code{slope}), augmented wih p-values and an interpretation).
+#'   coefficients (\code{slope}), augmented with p-values and an interpretation).
 #' @export
 #'
 #' @family analyses
@@ -42,7 +46,7 @@
 #' z <- trim(count ~ site + time, data=skylark, model=2,changepoints=c(1,4,6))
 #' # slope from time point 1 to 5
 #' overall(z,changepoints=c(1,5,7))
-overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0)) {
+overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0), bc=FALSE) {
   stopifnot(class(x)=="trim")
   which = match.arg(which)
 
@@ -87,29 +91,43 @@ overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0)) {
     if (df<=0) return("Unknown (df<=0)")
     alpha = c(0.05, 0.001)
     stopifnot(df>0)
-    tval <- qt((1-alpha/2), df)
+    if (bc) {
+      # Backwards compatbility, not recommended
+      tval <- qnorm((1-alpha/2))
+    } else {
+      tval <- qt((1-alpha/2), df)
+    }
     blo <- bhat - tval * berr
     bhi <- bhat + tval * berr
 
     # First priority: evidece for a strong trend?
-    if (blo[2] > 1.05) return("Strong increase (p<0.001)")
-    if (bhi[2] < 0.95) return("Strong decrease (p<0.001)")
-    if (blo[1] > 1.05) return("Strong increase (p<0.05)")
-    if (bhi[1] < 0.95) return("Strong decrease (p<0.05)")
+    if (blo[2] > +0.05) return("Strong increase (p<0.01)")
+    if (bhi[2] < -0.05) return("Strong decrease (p<0.01)")
+    if (blo[1] > +0.05) return("Strong increase (p<0.05)")
+    if (bhi[1] < -0.05) return("Strong decrease (p<0.05)")
+    # if (blo[2] > 1.05) return("Strong increase (p<0.01)")
+    # if (bhi[2] < 0.95) return("Strong decrease (p<0.01)")
+    # if (blo[1] > 1.05) return("Strong increase (p<0.05)")
+    # if (bhi[1] < 0.95) return("Strong decrease (p<0.05)")
 
     # Second prority: evidence for a moderate trend?
     eps = 1e-7 # required to get a correct interpretation for slope=0.0 (Stable)
-    if (blo[2] > 1.0+eps) return("Moderate increase (p<0.001)")
-    if (bhi[2] < 1.0-eps) return("Moderate decrease (p<0.001)")
-    if (blo[1] > 1.0+eps) return("Moderate increase (p<0.05)")
-    if (bhi[1] < 1.0-eps) return("Moderate decrease (p<0.05)")
-
+    if (blo[2] > +eps) return("Moderate increase (p<0.01)")
+    if (bhi[2] < -eps) return("Moderate decrease (p<0.01)")
+    if (blo[1] > +eps) return("Moderate increase (p<0.05)")
+    if (bhi[1] < -eps) return("Moderate decrease (p<0.05)")
+    # if (blo[2] > 1.0+eps) return("Moderate increase (p<0.01)")
+    # if (bhi[2] < 1.0-eps) return("Moderate decrease (p<0.01)")
+    # if (blo[1] > 1.0+eps) return("Moderate increase (p<0.05)")
+    # if (bhi[1] < 1.0-eps) return("Moderate decrease (p<0.05)")
+    #
     # Third priority: evidency for stability?
-    if (blo[1]>0.95 && bhi[1]<1.05) return("Stable")
+    if (blo[1] > -0.05 && bhi[1] < 0.05) return("Stable")
+    # if (blo[1]>0.95 && bhi[1]<1.05) return("Stable")
 
     # Leftover category: uncertain
     return("Uncertain")
-}
+  }
 
   # The overall slope is computed for both the modeled and the imputed $\Mu$'s.
   # So we define a function to do the actual work
@@ -140,9 +158,9 @@ overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0)) {
 
     # Compute the $p$-value, using the $t$-distribution
     df <- n - 2
-    t_val <- bhat[2] / b_err[2]
+    t_val <- bhat / b_err
     if (df>0) p <- 2 * pt(abs(t_val), df, lower.tail=FALSE)
-    else      p <- NA
+    else      p <- c(NA, NA)
 
     # Also compute effect size as relative change during the monitoring period.
     #effect <- abs(yhat[J] - yhat[1]) / yhat[1]
@@ -158,13 +176,11 @@ overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0)) {
       se_add    = b_err,
       mul       = exp(bhat),
       se_mul    = exp(bhat) * b_err,
+      p         = p,
       row.names = c("intercept","slope")
     )
+    z$meaning   = c("<none>", .meaning(z$add[2], z$se_add[2], n-2))
 
-    tval = z$mul / z$se_mul
-    z$p = if (df>0) 2 * pt(abs(tval), df, lower.tail=FALSE)
-          else      NA
-    z$meaning   = c("<none>", .meaning(z$mul[2], z$se_mul[2], n-2))
     list(src=src, coef=z, SSR=SSR)
   }
 
@@ -344,6 +360,9 @@ plot.trim.overall <- function(x, imputed=TRUE, ...) {
   yrange = range(yrange1, yrange2, na.rm=TRUE)
   ylim = 2 * yrange1[2]
   if (yrange[2] > ylim) yrange[2] = ylim
+
+  # Ensure y-axis starts at 0.0
+  yrange <- range(0.0, yrange)
 
   # Now plot layer-by-layer (using ColorBrewer colors)
   cbred <- rgb(228,26,28, maxColorValue = 255)

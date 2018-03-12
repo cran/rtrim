@@ -16,8 +16,26 @@ software developed at Statistics Netherlands by Jeroen Pannekoek.
 \section{Getting started}{
 
 
-Users of the original TRIM software can get started by following the
-\href{../doc/rtrim_for_TRIM_users.html}{rtrim for trim users} or
-following the \href{../doc/Skylark_example.html}{TRIM by example} manuals.
+Several vignettes have been written to document the `rtrim` package.
+
+For everybody:
+\itemize{
+\item\href{../doc/Skylark_example.html}{rtrim by example}
+\item\href{../doc/rtrim_2_extensions.html}{rtrim 2 extensions}
+}
+
+For users of the original Windows TRIM software:
+\itemize{
+\item\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users}
+}
+
+For users who would like to have more insight what is going on under the hood:
+\itemize{
+\item\href{../doc/TRIM_methods_v2.pdf}{Models and statistical methods in rtrim} (PDF),
+\item\href{../doc/TRIM_confidence_intervals.html}{rtrim confidence intervals}
+\item\href{../doc/taming_overdispersion.html}{Taming overdispersion}.
+}
+Enjoy!
+The rtrim team of Statistics Netherlands
 }
 

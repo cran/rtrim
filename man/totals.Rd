@@ -4,12 +4,18 @@
 \alias{totals}
 \title{Extract time-totals from TRIM output}
 \usage{
-totals(x, which = c("imputed", "fitted", "both"))
+totals(x, which = c("imputed", "fitted", "both"), obs = FALSE,
+  level = NULL)
 }
 \arguments{
 \item{x}{TRIM output structure (i.e., output of a call to \code{trim})}
 
 \item{which}{select what totals to compute (see \code{Details} section).}
+
+\item{obs}{Flag to include total observations (or not).}
+
+\item{level}{the confidence level required.
+If NULL, no confidence inetrvals are calculated.}
 }
 \value{
 A \code{data.frame} with subclass \code{trim.totals}
@@ -33,6 +39,7 @@ for two cases:
 values predicted by the model.}
 }
 }
+
 \examples{
 data(skylark)
 z <- trim(count ~ site + time, data=skylark, model=2, changepoints=c(3,5))
@@ -42,7 +49,8 @@ totals(z, "both") # mimics classic TRIM
 
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overall}}, \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -51,4 +59,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{summary.trim}}, \code{\link{trim}},
   \code{\link{vcov.trim}}, \code{\link{wald}}
 }
-

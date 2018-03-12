@@ -221,6 +221,9 @@ coef.trim <- function(object,
 #'
 #' @param x TRIM output structure (i.e., output of a call to \code{trim})
 #' @param which select what totals to compute (see \code{Details} section).
+#' @param obs Flag to include total observations (or not).
+#' @param level the confidence level required.
+#'   If NULL, no confidence inetrvals are calculated.
 #'
 #' @return A \code{data.frame} with subclass \code{trim.totals}
 #'  (for pretty-printing). The columns are \code{time}, \code{fitted}
@@ -249,7 +252,7 @@ coef.trim <- function(object,
 #'
 #' totals(z, "both") # mimics classic TRIM
 #'
-totals <- function(x, which=c("imputed","fitted","both")) {
+totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL) {
   stopifnot(class(x)=="trim")
 
   # Select output columns from the pre-computed time totals
@@ -257,8 +260,17 @@ totals <- function(x, which=c("imputed","fitted","both")) {
   totals <- switch(which
     , fitted  = x$time.totals[c(1,2,3)]
     , imputed = x$time.totals[c(1,4,5)]
-    , both    = x$time.totals
+    , both    = x$time.totals[1:5]
   )
+  if (obs) totals$observed <- x$time.totals$observed
+
+  # Optionally add a confidence interval
+  if (!is.null(level)) {
+    if (ncol(totals)!=3) stop("Confidence intervals can only be computed for either imputed or fitted time totals, but not for both")
+    mul <- ci_multipliers(lambda=totals[[2]], sig2=x$sig2, level=level)
+    totals$lo <- totals[[2]] - totals[[3]] * mul$lo
+    totals$hi <- totals[[2]] + totals[[3]] * mul$hi
+  }
 
   # wrap the time.index field in a list and make it an S3 class
   # (so that it becomes recognizable as a TRIM time-indices)
@@ -280,6 +292,404 @@ export.trim.totals <- function(x, species, stratum) {
   print(df, row.names=FALSE)
 }
 
+#------------------------------------------------------------------ Plot -----
+
+
+#' Plot time-totals from trim output.
+#'
+#' This function plots a time series of one or more \code{trim.totals} objects, i.e. the output of \code{totals}.
+#' Both the time totals themselves, as the associated standard errros will be plotted,
+#' the former as a solid line with markers, the latter as a transparent band.
+#'
+#' Additionally, the observed counts will be plotted (as a line) when this was asked for in the call to \code{totals}.
+#'
+#' Multiple time-total data sets can be compared in a single plot
+#'
+#' @param x       an object of class \code{trim.totals}, as resulting from e.g. a call to \code{totals}.
+#' @param ...     optional additional \code{trim.totals} objects.
+#' @param names   optional character vector with names for the various series.
+#' @param xlab    x-axis label. The default value of "auto" will be changed into "Year" or "Time Point", whichever is more appropriate.
+#' @param ylab    y-axis label.
+#' @param leg.pos legend position, similar as in \code{\link[graphics]{legend}}.
+#' @param band Defines if the uncertainty band will be plotted using standard errors ("se") or confidence intervals ("ci").
+#'
+#' @export
+#'
+#' @family graphical post-processing
+#'
+#' @examples
+#'
+#' # Simple example
+#' data(skylark2)
+#' z <- trim(count ~ site + year, data=skylark2, model=3)
+#' plot(totals(z))
+#'
+#' # Extended example
+#' z1 <- trim(count ~ site + year + habitat, data=skylark2, model=3)
+#' z2 <- trim(count ~ site + year, data=skylark2, model=3)
+#' t1 <- totals(z1, obs=TRUE)
+#' t2 <- totals(z2, obs=TRUE)
+#' plot(t1, t2, names=c("with covariates", "without covariates"), main="Skylark", leg.pos="bottom")
+#'
+plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals", leg.pos="topleft", band="se") {
+
+  special <- "time totals" # disinguish between "time totals" and "index" modes
+
+  # 1. Parse ellipsis (...) arguments: collect trim.totals objects and their names
+
+  zz <- list(x)
+  nz <- 1L
+
+  ellipsis <- as.list(substitute(list(...)))[-1L]
+  n <- length(ellipsis) # number of ellipsis arguments
+  if (n>0) {
+    keep <- rep(TRUE, n) # records which (named!) arguments to keep for passing to plot()
+    if (is.null(names(ellipsis))) { # none has names
+      named <- rep(FALSE, n)
+    } else {                        # some have names
+      named <- nchar(names(ellipsis)) > 0
+    }
+    for (i in seq_along(ellipsis)) {
+      if (named[i]) next # skip over named arguments that are captured in the ...
+      item <- ellipsis[[i]]
+      if (is.symbol(item)) item <- eval(item) # needed to convert symbol -> data.frame
+      if (inherits(item, "trim.totals")) {
+        nz <- nz + 1L
+        zz[[nz]] <- item
+        keep[i] <- FALSE # additional index data sets are removed from the ellipsis argument
+      } else if (class(item)=="character") {
+        # todo: check if this arguments immediately follows an index argument
+        attr(zz[[nz]], "tag") <- item
+        keep[i] <- FALSE
+      } else stop("Unknown type for unnamed argument")
+    }
+    ellipsis <- ellipsis[keep]
+  }
+  stopifnot(nz==length(zz)) # check
+
+
+  # 2. Create color palette
+
+  brewer_set1 <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33","#A65628","#F781BF","#999999")
+  opaque <- brewer_set1
+  aqua   <- brewer_set1
+  for (i in seq_along(aqua)) aqua[i] <- adjustcolor(aqua[i], 0.5)
+
+
+  # 3. Setup series
+
+  series <- list()
+  nseries <- 0
+
+  if (nz==1) {
+    x   <- zz[[1]][[1]] # Time point or years
+    y   <- zz[[1]][[2]] # Imputed or fitted totals
+    err <- zz[[1]][[3]] # Standard error
+    obs <- zz[[1]]$observed # might be NULL, which is OK
+    y_se_lo = y - err
+    y_se_hi = y + err
+    y_ci_lo = zz[[1]]$lo # might be NULL, which is OK
+    y_ci_hi = zz[[1]]$hi # idem
+    if (band=="ci") {
+      if (is.null(y_ci_lo) || is.null(y_ci_hi)) stop("No confidence interval present")
+      y_se_lo <- y_ci_lo
+      y_se_hi <- y_ci_hi
+      y_ci_lo <- y_ci_hi <- NULL
+    }
+
+    nseries <- 1
+    name <- attr(zz[[1]], "tag") # might be NULL
+    series[[1]] <- list(x=x, y=y,
+                        y_se_lo=y_se_lo, y_se_hi=y_se_hi,
+                        y_ci_lo=y_ci_lo, y_ci_hi=y_ci_hi,
+                        fill=aqua[1], stroke=opaque[1], lty="solid", name=name, obs=obs)
+  } else {
+    # Create or handle names
+    if (is.null(names)) names <- sprintf("<no name> #%d", 1:nz) # default names
+    if (length(names)!=nz) stop("Number of names is not equal to number of series")
+    for (i in seq.int(nz)) {
+      name <- attr(zz[[i]], "tag")
+      if (!is.null(name)) names[i] <- name
+    }
+    # Now create the series
+    for (i in seq.int(nz)) {
+      x   <- zz[[i]][[1]] # Time point or years
+      y   <- zz[[i]][[2]] # Imputed or fitted totals
+      err <- zz[[i]][[3]] # Standard error
+      obs <- zz[[i]]$observed # might be NULL, which is OK
+      y_se_lo = y - err
+      y_se_hi = y + err
+      y_ci_lo = zz[[1]]$lo # might be NULL, which is OK
+      y_ci_hi = zz[[1]]$hi # idem
+      if (band=="ci") {
+        if (is.null(y_ci_lo) || is.null(y_ci_hi)) stop("No confidence interval present")
+        y_se_lo <- y_ci_lo
+        y_se_hi <- y_ci_hi
+        y_ci_lo <- y_ci_hi <- NULL
+      }
+      nseries <- nseries + 1
+      series[[i]] <- list(x=x, y=y,
+                          y_se_lo=y_se_lo, y_se_hi=y_se_hi,
+                          y_ci_lo=y_ci_lo, y_ci_hi=y_ci_hi,
+                          fill=aqua[i], stroke=opaque[i], lty="solid", name=names[i], obs=obs)
+    }
+  }
+
+
+  # 4. Some further analysis
+
+  # Determine axis labels iff automatic (just use the last 'x' defined)
+  if (xlab=="auto") {
+    xlab <- ifelse(x[1]==1, "Time Point", "Year")
+  }
+
+  xrange <- range(x)
+  yrange <- range(series[[1]]$y_se_lo, series[[1]]$y_se_hi)
+  if (nseries>1) for (i in 2:nseries) {
+    yrange <- range(series[[i]]$y_se_lo, series[[i]]$y_se_hi, yrange)
+  }
+  # also include optional CI range
+  for (i in 1:nseries) {
+    yrange <- range(series[[i]]$y_ci_lo, series[[i]]$y_ci_hi, yrange)
+  }
+  yrange <- range(yrange, 0.0) # honest scaling
+
+
+  # 5. Plotting
+
+  # Start with an 'empty' plot for starters
+  # (we do need some special tricks to pass the plot-specific elements of ...)
+  par(las=1)
+  args <- ellipsis
+  args$x <- NULL
+  args$y <- NULL
+  args$type='n'
+  args <- c(list(x=NULL,y=NULL, type='n', xlim=xrange, ylim=yrange, xlab=xlab, ylab=ylab), ellipsis)
+  # plot(NULL, NULL, type='n', xlim=xrange, ylim=yrange, xlab=xlab, ylab=ylab, ...) # won't work
+  do.call(plot, args) # does work
+
+  yscale <- 1.0
+  if (special=="index") abline(h=yscale, lty="dashed")
+
+  # Bottom layer: error bars
+
+  for (i in rev(1:nseries)) { # reverse order to have the first series on top
+    ser <- series[[i]]
+    xx <- c(ser$x, rev(ser$x))
+    yy <- c(ser$y_se_lo, rev(ser$y_se_hi))
+    polygon(xx, yy, col=ser$fill, border=NA)
+    segments(ser$x, ser$y_se_lo, ser$x, ser$y_se_hi, col="white", lwd=2)
+  }
+
+  # Optionally: confidence interval
+  for (i in rev(1:nseries)) {
+    ser <- series[[i]]
+    if (length(ser$y_ci_lo)==0) next # skip if no CI
+    lines(ser$x, ser$y_ci_lo, col=ser$stroke, lwd=1, lty="dashed")
+    lines(ser$x, ser$y_ci_hi, col=ser$stroke, lwd=1, lty="dashed")
+  }
+
+  # Top layer: lines
+
+  for (i in rev(1:nseries)) {
+    ser <- series[[i]]
+    lines(ser$x, ser$y, col=ser$stroke, lwd=2, lty=ser$lty)
+    points(ser$x, ser$y, col=ser$stroke, pch=16)
+  }
+
+  # Optional: observations (sans standard error)
+
+  for (i in rev(1:nseries)) {
+    ser <- series[[i]]
+    if (!is.null(ser$obs)) {
+      lines(ser$x, ser$obs, col=ser$stroke, lwd=2, lty=ser$lty)
+    }
+  }
+
+  # Optional a legend
+
+  if (nseries>1) {
+    leg.names <- leg.colors <- leg.lty <- character(nseries)
+    for (i in 1:nseries) {
+      leg.names[i]  <- series[[i]]$name
+      leg.colors[i] <- series[[i]]$stroke
+      leg.lty[i]    <- series[[i]]$lty
+    }
+    legend(leg.pos, legend=leg.names, col=leg.colors, lty=leg.lty, lwd=2, bty='n', inset=0.02, y.intersp=1.5);
+  }
+
+
+  #### old ####
+
+
+  # # Build a list of time-totals with optional titles
+  # tt = list(t1)
+  # optional = list(...)
+  #
+  # # cat("tt pre:\n")
+  # # str(tt)
+  #
+  # # cat("optional:\n")
+  # # str(optional)
+  #
+  # nopt = length(optional)
+  # for (i in seq_len(nopt)) {
+  #   x = optional[[i]]
+  #   if ("character" %in% class(x)) {
+  #     attr(tt[[length(tt)]], "tag") <- x
+  #   } else if ("trim.totals" %in% class(x)) {
+  #     tt[[length(tt)+1]] <- x
+  #   } else {
+  #     stop(sprintf("Invalid data type for optional argument %d: %s", i, class(x)))
+  #   }
+  # }
+  #
+  # # cat("tt post:\n")
+  # # str(tt)
+  #
+  # # cat("leg.pos:\n")
+  # # str(leg.pos)
+  #
+  # # First pass to compute total range
+  # n = length(tt)
+  # for (i in 1:n) {
+  #   x = tt[[i]][[1]] # Time point or years
+  #   y = tt[[i]][[2]] # imputed or fitted
+  #   s = tt[[i]][[3]] # Standard error
+  #   ylo = y-s
+  #   yhi = y+s
+  #   if (i==1) {
+  #     xrange <- range(x)
+  #     yrange <- range(ylo, yhi)
+  #   } else {
+  #     xrange <- range(xrange, range(x))
+  #     yrange <- range(yrange, range(ylo, range(yhi)))
+  #   }
+  # }
+  #
+  # # Ensure y-axis starts at 0.0
+  # yrange <- range(0.0, yrange)
+  #
+  # # empty plot for correct axes
+  # plot(xrange, yrange, type='n', xlab="Time point", ylab="Time totals")
+  #
+  # # Second pass: plot them
+  # for (i in 1:n) {
+  #   x = tt[[i]][[1]] # Time point or years
+  #   y = tt[[i]][[2]] # imputed or fitted
+  #   s = tt[[i]][[3]] # Standard error
+  #   ylo = y-s
+  #   yhi = y+s
+  #
+  #   xx = c(x, rev(x))
+  #   ci = c(ylo, rev(yhi))
+  #
+  #   polygon(xx,ci, col=aqua[i], border=NA)
+  #   lines(x,y, col=opaque[i])
+  #
+  #   # optionally include observed time totals
+  #   if ("observed" %in% names(tt[[i]])) {
+  #     y = tt[[i]][["observed"]]
+  #     lines(x,y, col=opaque[i], lty="dashed")
+  #   }
+  # }
+  #
+  # # third pass: legend
+  # nnamed  = 0
+  # nnoname = 0
+  # for (i in 1:n) {
+  #   s <- attr(tt[[i]],"tag")
+  #   if (is.null(s)) {
+  #     nnoname <- nnoname + 1
+  #     s <- sprintf("<unnamed> %d", nnoname)
+  #   } else {
+  #     nnamed = nnamed + 1
+  #   }
+  #   if (i==1) {
+  #     leg.colors <- opaque[i]
+  #     leg.names  <- s
+  #   } else {
+  #     leg.colors <- c(leg.colors, opaque[i])
+  #     leg.names <- c(leg.names, s)
+  #   }
+  # }
+  # if (n>1 | nnamed>0) {
+  #   legend(leg.pos, legend=leg.names, col=leg.colors, lty=1, lwd=2, bty='n', inset=0.02, y.intersp=1.5);
+  # }
+}
+
+# #################################################### Confidence Intervals ####
+
+
+#' Compute Std.err ==> conf.int multipliers.
+#'
+#' @param lambda mean
+#' @param sig2   overdispersion parameter
+#' @param level  the confidence level required
+#'
+#' @return matrix with multipliers. col1=lo; col2=hi
+ci_multipliers <- function(lambda, sig2=NULL, level=0.95)
+{
+  if (is.null(sig2)) sig2 <- 1.0
+  if (sig2<1) stop("Overdispersion must be >= 1")
+  # Quantiles
+  qhi <- qgamma(p=1-(1-level)/2, shape=lambda/sig2, scale=sig2)
+  qlo <- qgamma(p=  (1-level)/2, shape=lambda/sig2, scale=sig2)
+  # Standard deviation
+  sd <- sqrt(sig2 * lambda)
+  # Multipliers
+  data.frame(lomul = (qhi-lambda) / sd,
+             himul = (lambda-qlo) / sd)
+}
+
+
+# ----------------------------------------------------------------- confint ----
+
+#' Compute time-totals confidence interval
+#'
+#' Computes confidence intervals for the time-totals of a TRIM model.
+#' Both imputed and fitted time-totals are supported, and the confidence level can be specified.
+#'
+#' @param object a TRIM output object
+#' @param parm   parameter specification: imputed or fitted time-totals.
+#' @param level  the confidence level required.
+#' @param ... not used [included for R compatibility reasons]
+#'
+#' @export
+#'
+#' @family analyses
+#'
+#' @examples
+#' data(skylark2)
+#' z <- trim(count ~ site + year, data=skylark2, model=3)
+#' CI <- confint(z)
+confint.trim <- function(object, parm=c("imputed","fitted"), level=0.95, ...) {
+  # Get time-totals
+  parm <- match.arg(parm)
+  tt <- totals(object, parm)
+  lambda <- tt[[2]] # imputed or fitted time totals
+  se     <- tt[[3]] # std.err.
+
+  sig2 <- 1.0
+
+  # Lower bound:
+  qlo <- qgamma(p=(1-level)/2,   shape=lambda) # Compute multipliers
+  lmul <- (lambda-qlo) / sqrt(lambda)
+  lo <- lambda - se * lmul # Compute CI bounds
+  # Upper bound
+  qhi <- qgamma(p=1-(1-level)/2, shape=lambda)
+  umul <- (qhi-lambda) / sqrt(lambda)
+  hi <- lambda + se * umul
+  # Combine and label
+  CI <- cbind(lo, hi)
+  pctlo <- sprintf("%.1f %%", 100 * ((1-level)/2))
+  pcthi <- sprintf("%.1f %%", 100 * (1-(1-level)/2))
+  colnames(CI) <- c(pctlo,pcthi)
+  # Return
+  CI
+}
+
+
 # ============================================== Variance-Covariance matrix ====
 
 # ----------------------------------------------------------------- extract ----
@@ -288,25 +698,25 @@ export.trim.totals <- function(x, species, stratum) {
 #'
 #' @param object TRIM output structure (i.e., output of a call to \code{trim})
 #' @param which \code{[character]} Selector to distinguish between variance-covariance based on the
-#' imputed data (default), or the modelled data.
-#' @param ... Arguments to pass to or from other methods (currently unused)
+#' imputed counts (default), or the fitted counts.
+#' @param ... Arguments to pass to or from other methods (currently unused; included for consistency with \code{\link[stats]{vcov}}).
 #'
-#' @return a JxJ matrix, where J is the number of time points.
+#' @return a J x J matrix, where J is the number of years (or time-points).
 #' @export
 #'
 #' @family analyses
 #' @examples
 #' data(skylark)
-#' z <- trim(count ~ site + time, data=skylark, model=2);
+#' z <- trim(count ~ site + time, data=skylark, model=3);
 #' totals(z)
-#' vcv1 <- vcov(z)       # Use imputed data
-#' vcv2 <- vcov(z,"model") # Use modelled data
-vcov.trim <- function(object, which = c("imputed","model"), ... ) {
+#' vcv1 <- vcov(z)          # Use imputed data
+#' vcv2 <- vcov(z,"fitted") # Use fitted data
+vcov.trim <- function(object, which = c("imputed","fitted"), ... ) {
   stopifnot(inherits(object,"trim"))
   which <- match.arg(which)
 
   vcv <- switch(which
-    , model   = object$var_tt_mod
+    , fitted  = object$var_tt_mod
     , imputed = object$var_tt_imp
   )
   vcv
@@ -326,7 +736,7 @@ vcov.trim <- function(object, which = c("imputed","model"), ... ) {
 #' @param z TRIM output structure (i.e., output of a call to \code{trim})
 #'
 #' @return A \code{data.frame}, one row per site-time combination, with columns for
-#' site, time, observed counts, modelled counts and imputed counts.
+#' site, year, month (optionally), observed counts, modelled counts and imputed counts.
 #' Missing observations are marked as \code{NA}.
 #'
 #' @export
@@ -339,13 +749,26 @@ vcov.trim <- function(object, which = c("imputed","model"), ... ) {
 results <- function(z) {
   stopifnot(inherits(z,"trim"))
 
-  out <- data.frame(
-    site = rep(z$site.id, each=z$ntime),
-    time = rep(z$time.id, times=z$nsite),
-    observed = as.vector(t(z$f)),
-    fitted   = as.vector(t(z$mu)),
-    imputed  = as.vector(t(z$imputed))
-  )
+  if (z$nmonth==1) {
+    # No months
+    out <- data.frame(
+      site = rep(z$site_id, each=z$ntime),
+      time = rep(z$time.id, times=z$nsite),
+      observed = as.vector(t(z$f)),
+      fitted   = as.vector(t(z$mu)),
+      imputed  = as.vector(t(z$imputed))
+    )
+  } else {
+    # With monthts
+    out <- data.frame(
+      site = rep(z$site_id, each=(z$nyear * z$nmonth)),
+      year = rep(z$time.id, each=z$nmonth, times=z$nsite),
+      month = rep(z$month_id, times=(z$nsite * z$nyear)),
+      observed = as.vector(aperm(z$f, c(3,2,1))),
+      fitted   = as.vector(aperm(z$mu, c(3,2,1))),
+      imputed  = as.vector(aperm(z$imputed, c(3,2,1)))
+    )
+  }
   class(out) <- c("trim.results","data.frame")
   out
 }

@@ -4,7 +4,8 @@
 \alias{overall}
 \title{Compute overall slope}
 \usage{
-overall(x, which = c("imputed", "fitted"), changepoints = numeric(0))
+overall(x, which = c("imputed", "fitted"), changepoints = numeric(0),
+  bc = FALSE)
 }
 \arguments{
 \item{x}{an object of class \code{\link{trim}}.}
@@ -14,10 +15,13 @@ overall(x, which = c("imputed", "fitted"), changepoints = numeric(0))
 
 \item{changepoints}{\code{[numeric]} Change points for which to compute the overall slope,
 or "model", in which case the changepoints from the model are used (if any)}
+
+\item{bc}{\code{[logical]} Flag to set backwards compatability with TRIM with respect to trend interpretation.
+Defaults to \code{FALSE}.}
 }
 \value{
 a list of class \code{trim.overall} containing, a.o., overall slope
-  coefficients (\code{slope}), augmented wih p-values and an interpretation).
+  coefficients (\code{slope}), augmented with p-values and an interpretation).
 }
 \description{
 The overal slope represents the total growth over the piecewise linear model.
@@ -30,7 +34,12 @@ This can be determined over the whole time period for which the model is fitted 
 or may be computed over time slices that can be defined with the \code{cp} parameter.
 The values for \code{changepoints} do not depend on \code{changepoints} that were used when
 specifying the \code{trim} model (See also the example below).
+
+Note that the original TRIM erroneously assumed that the estimated overall trend
+magnitude is t-distributed, while in fact it is normally distributed, which is being used within rtrim.
+The option \code{bc=TRUE} can be set to force backward compability, for e.g. comparison purposes.
 }
+
 \examples{
 
 # obtain the overall slope accross all change points.
@@ -50,7 +59,8 @@ z <- trim(count ~ site + time, data=skylark, model=2,changepoints=c(1,4,6))
 overall(z,changepoints=c(1,5,7))
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
+Other analyses: \code{\link{coef.trim}},
+  \code{\link{confint.trim}}, \code{\link{gof}},
   \code{\link{index}}, \code{\link{now_what}},
   \code{\link{overdispersion}},
   \code{\link{plot.trim.index}},
@@ -60,4 +70,3 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
-

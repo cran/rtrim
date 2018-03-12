@@ -13,4 +13,3 @@
 Print an object of class trim.overall
 }
 \keyword{internal}
-

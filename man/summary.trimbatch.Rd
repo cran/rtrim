@@ -15,4 +15,3 @@
 summarize a trimbatch object
 }
 \keyword{internal}
-
