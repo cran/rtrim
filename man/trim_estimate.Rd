@@ -4,8 +4,9 @@
 \alias{trim_estimate}
 \title{TRIM estimation function}
 \usage{
-trim_estimate(count, site, year, month, weights, covars, model, changepoints,
-  overdisp, serialcor, autodelete, stepwise, covin, verbose = FALSE, ...)
+trim_estimate(count, site, year, month, weights, covars, model,
+  changepoints, overdisp, serialcor, autodelete, stepwise, covin,
+  verbose = FALSE, ...)
 }
 \arguments{
 \item{count}{a numerical vector of count data.}

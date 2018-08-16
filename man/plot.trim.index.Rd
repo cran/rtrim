@@ -64,3 +64,5 @@ Other analyses: \code{\link{coef.trim}},
 Other graphical post-processing: \code{\link{heatmap}},
   \code{\link{plot.trim.totals}}
 }
+\concept{analyses}
+\concept{graphical post-processing}

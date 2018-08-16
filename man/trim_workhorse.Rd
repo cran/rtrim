@@ -4,10 +4,10 @@
 \alias{trim_workhorse}
 \title{TRIM workhorse function}
 \usage{
-trim_workhorse(count, site, year, month, weights, covars, model, changepoints,
-  overdisp, serialcor, autodelete, stepwise, covin = list(),
-  constrain_overdisp = 1, conv_crit = 1e-05, max_iter = 200,
-  debug = FALSE)
+trim_workhorse(count, site, year, month, weights, covars, model,
+  changepoints, overdisp, serialcor, autodelete, stepwise,
+  covin = list(), constrain_overdisp = 1, conv_crit = 1e-05,
+  max_iter = 200, debug = FALSE)
 }
 \arguments{
 \item{count}{a numerical vector of count data.}

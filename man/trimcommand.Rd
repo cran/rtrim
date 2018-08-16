@@ -55,3 +55,4 @@ Other modelspec: \code{\link{check_observations}},
   \code{\link{read_tcf}}, \code{\link{read_tdf}},
   \code{\link{set_trim_verbose}}, \code{\link{trim}}
 }
+\concept{modelspec}

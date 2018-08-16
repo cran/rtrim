@@ -70,3 +70,4 @@ Other analyses: \code{\link{coef.trim}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
+\concept{analyses}

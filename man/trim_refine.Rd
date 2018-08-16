@@ -4,8 +4,8 @@
 \alias{trim_refine}
 \title{TRIM stepwise refinement}
 \usage{
-trim_refine(count, site, year, month, weights, covars, model, changepoints, ...,
-  premove = 0.2, penter = 0.15)
+trim_refine(count, site, year, month, weights, covars, model, changepoints,
+  ..., premove = 0.2, penter = 0.15)
 }
 \arguments{
 \item{count}{a numerical vector of count data.}

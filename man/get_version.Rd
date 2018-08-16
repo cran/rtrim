@@ -22,4 +22,5 @@ Other parse_output: \code{\link{get_coef}},
   \code{\link{get_time_totals}}, \code{\link{get_wald}},
   \code{\link{read_tof}}, \code{\link{read_vcv}}
 }
+\concept{parse_output}
 \keyword{internal}

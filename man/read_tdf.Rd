@@ -8,8 +8,8 @@
 \usage{
 read_tdf(x, ...)
 
-\method{read_tdf}{character}(x, missing = -1, weight = FALSE, ncovars = 0,
-  labels = character(0), ...)
+\method{read_tdf}{character}(x, missing = -1, weight = FALSE,
+  ncovars = 0, labels = character(0), ...)
 
 \method{read_tdf}{trimcommand}(x, ...)
 }
@@ -58,3 +58,4 @@ Other modelspec: \code{\link{check_observations}},
   \code{\link{read_tcf}}, \code{\link{set_trim_verbose}},
   \code{\link{trimcommand}}, \code{\link{trim}}
 }
+\concept{modelspec}

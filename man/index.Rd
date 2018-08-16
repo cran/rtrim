@@ -4,8 +4,8 @@
 \alias{index}
 \title{Extract time-indices from TRIM output.}
 \usage{
-index(x, which = c("imputed", "fitted", "both"), covars = FALSE, base = 1,
-  level = NULL)
+index(x, which = c("imputed", "fitted", "both"), covars = FALSE,
+  base = 1, level = NULL)
 }
 \arguments{
 \item{x}{an object of class \code{\link{trim}}}
@@ -73,3 +73,4 @@ Other analyses: \code{\link{coef.trim}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
+\concept{analyses}

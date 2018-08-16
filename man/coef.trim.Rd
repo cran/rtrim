@@ -101,3 +101,4 @@ Other analyses: \code{\link{confint.trim}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
+\concept{analyses}

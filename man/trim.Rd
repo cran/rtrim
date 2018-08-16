@@ -9,11 +9,12 @@
 \usage{
 trim(object, ...)
 
-\method{trim}{data.frame}(object, count_col = "count", site_col = "site",
-  year_col = "year", month_col = NULL, weights_col = NULL,
-  covar_cols = NULL, model = 2, changepoints = ifelse(model == 2, 1L,
-  integer(0)), overdisp = FALSE, serialcor = FALSE, autodelete = TRUE,
-  stepwise = FALSE, covin = list(), ...)
+\method{trim}{data.frame}(object, count_col = "count",
+  site_col = "site", year_col = "year", month_col = NULL,
+  weights_col = NULL, covar_cols = NULL, model = 2,
+  changepoints = ifelse(model == 2, 1L, integer(0)), overdisp = FALSE,
+  serialcor = FALSE, autodelete = TRUE, stepwise = FALSE,
+  covin = list(), ...)
 
 \method{trim}{formula}(object, data = NULL, weights = NULL, ...)
 
@@ -284,3 +285,5 @@ Other modelspec: \code{\link{check_observations}},
   \code{\link{read_tcf}}, \code{\link{read_tdf}},
   \code{\link{set_trim_verbose}}, \code{\link{trimcommand}}
 }
+\concept{analyses}
+\concept{modelspec}

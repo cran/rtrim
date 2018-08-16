@@ -51,3 +51,4 @@ plot(t1, t2, names=c("with covariates", "without covariates"), main="Skylark", l
 Other graphical post-processing: \code{\link{heatmap}},
   \code{\link{plot.trim.index}}
 }
+\concept{graphical post-processing}

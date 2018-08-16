@@ -38,3 +38,4 @@ Other analyses: \code{\link{coef.trim}},
   \code{\link{summary.trim}}, \code{\link{totals}},
   \code{\link{trim}}, \code{\link{vcov.trim}}
 }
+\concept{analyses}

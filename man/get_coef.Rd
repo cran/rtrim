@@ -27,4 +27,5 @@ Other parse_output: \code{\link{get_estimation_method}},
   \code{\link{get_wald}}, \code{\link{read_tof}},
   \code{\link{read_vcv}}
 }
+\concept{parse_output}
 \keyword{internal}

@@ -4,8 +4,8 @@
 \alias{confint.trim}
 \title{Compute time-totals confidence interval}
 \usage{
-\method{confint}{trim}(object, parm = c("imputed", "fitted"), level = 0.95,
-  ...)
+\method{confint}{trim}(object, parm = c("imputed", "fitted"),
+  level = 0.95, ...)
 }
 \arguments{
 \item{object}{a TRIM output object}
@@ -36,3 +36,4 @@ Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
   \code{\link{trim}}, \code{\link{vcov.trim}},
   \code{\link{wald}}
 }
+\concept{analyses}

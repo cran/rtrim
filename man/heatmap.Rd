@@ -47,3 +47,4 @@ heatmap(z,"imputed")
 Other graphical post-processing: \code{\link{plot.trim.index}},
   \code{\link{plot.trim.totals}}
 }
+\concept{graphical post-processing}
