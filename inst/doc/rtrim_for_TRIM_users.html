@@ -1,77 +1,109 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Patrick Bogaart, Mark van der Loo and Jeroen Pannekoek" />
 
-<meta name="date" content="2018-08-24" />
+<meta name="date" content="2020-04-21" />
 
 <title>rtrim for TRIM3 users</title>
 
 
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
-div.sourceLine, a.sourceLine { display: inline-block; min-height: 1.25em; }
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
 a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
 @media print {
 code.sourceCode { white-space: pre-wrap; }
-div.sourceLine, a.sourceLine { text-indent: -1em; padding-left: 1em; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
 }
-pre.numberSource div.sourceLine, .numberSource a.sourceLine
-  { position: relative; }
-pre.numberSource div.sourceLine::before, .numberSource a.sourceLine::before
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
   { content: attr(data-line-number);
-    position: absolute; left: -5em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all;
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em; }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; color: #aaaaaa;  padding-left: 4px; }
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
 @media screen {
-a.sourceLine::before { text-decoration: underline; color: initial; }
+a.sourceLine::before { text-decoration: underline; }
 }
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
 code span.dt { color: #902000; } /* DataType */
 code span.dv { color: #40a070; } /* DecVal */
-code span.bn { color: #40a070; } /* BaseN */
-code span.fl { color: #40a070; } /* Float */
-code span.ch { color: #4070a0; } /* Char */
-code span.st { color: #4070a0; } /* String */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.ot { color: #007020; } /* Other */
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.fu { color: #06287e; } /* Function */
 code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code span.cn { color: #880000; } /* Constant */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.im { } /* Import */
-code span.va { color: #19177c; } /* Variable */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.op { color: #666666; } /* Operator */
-code span.bu { } /* BuiltIn */
 code span.ex { } /* Extension */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.at { color: #7d9029; } /* Attribute */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
 </style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -85,9 +117,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -256,8 +285,12 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
+
+
+
 
 </head>
 
@@ -267,8 +300,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 <h1 class="title toc-ignore"><code>rtrim</code> for <code>TRIM3</code> users</h1>
-<h4 class="author"><em>Patrick Bogaart, Mark van der Loo and Jeroen Pannekoek</em></h4>
-<h4 class="date"><em>2018-08-24</em></h4>
+<h4 class="author">Patrick Bogaart, Mark van der Loo and Jeroen Pannekoek</h4>
+<h4 class="date">2020-04-21</h4>
 
 
 <div id="TOC">
@@ -276,7 +309,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#computing-trim-models">Computing TRIM models</a></li>
 <li><a href="#modelspec">Model specification</a></li>
-<li><a href="#trim-command-files">TRIM Command Files</a></li>
+<li><a href="#tcf">TRIM Command Files</a></li>
 <li><a href="#trim-data-files">TRIM data files</a></li>
 <li><a href="#utility-functions">Utility functions</a></li>
 </ul>
@@ -287,7 +320,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>The <code>rtrim</code> package is an complete reimplementation of the <a href="https://www.cbs.nl/en-gb/society/nature-and-environment/indices-and-trends--trim--">original TRIM</a> software developed by Jeroen Pannekoek and Arco van Strien from the 1990’s onwards. This vignette provides a quick getting started manual that demonstrates the R-based workflow for computing TRIM models.</p>
 <ul>
 <li>An extensive introduction showing many of the options can be found in the <a href="Skylark_example.html">trim by example</a> vignette.</li>
-<li>To use legacy TRIM command files and TRIM data files, see the <a href="Working_with_tcf.html">vignette on tcf files</a>.</li>
+<li>To use legacy TRIM command files and TRIM data files, see the <a href="#tcf">section on tcf files</a>.</li>
 </ul>
 <p>TRIM was developed to estimate animal populations, based on repeated counts at various sites while counts may be missing for certain sites at certain times. Estimation is based on a model-based imputation method.</p>
 <p>We assume that the reader is already familiar with the methodology behind TRIM but in short, TRIM estimates a piecewise loglinear growth model to compute imputations. There are three variants of this model which differ by their basic assumptions.</p>
@@ -302,56 +335,56 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="computing-trim-models" class="section level2">
 <h2>Computing TRIM models</h2>
 <p>We are going to use the <code>skylark</code> dataset, which is included with the package.</p>
-<pre class="sourceCode r" id="cb1"><code class="sourceCode r"><div class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(rtrim)</div>
-<div class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">data</span>(skylark)</div>
-<div class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">head</span>(skylark,<span class="dv">3</span>) <span class="co"># inspect the dataset</span></div>
-<div class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">#&gt;   site time count Habitat Deposition</span></div>
-<div class="sourceLine" id="cb1-5" data-line-number="5"><span class="co">#&gt; 1    1    1    11       2          2</span></div>
-<div class="sourceLine" id="cb1-6" data-line-number="6"><span class="co">#&gt; 2    1    2     8       2          2</span></div>
-<div class="sourceLine" id="cb1-7" data-line-number="7"><span class="co">#&gt; 3    1    3     5       2          2</span></div></code></pre>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(rtrim)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">data</span>(skylark)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">head</span>(skylark,<span class="dv">3</span>) <span class="co"># inspect the dataset</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">#&gt;   site time count Habitat Deposition</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="co">#&gt; 1    1    1    11       2          2</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co">#&gt; 2    1    2     8       2          2</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="co">#&gt; 3    1    3     5       2          2</span></a></code></pre></div>
 <p>Here, <code>skylark</code> is a regular R <code>data.frame</code>.</p>
 <p>The central function for computing TRIM models is called <code>trim</code>. Calling this function is very similar to calling basic R modeling functions like <code>lm</code>. Here, we compute TRIM model 2.</p>
-<pre class="sourceCode r" id="cb2"><code class="sourceCode r"><div class="sourceLine" id="cb2-1" data-line-number="1">m1 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span>)</div></code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">m1 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span>)</a></code></pre></div>
 <p>Note that the data is passed to <code>trim</code> as an R data.frame. Information on which columns in the data frame represent the counts, the site ID’s etc is encoded in the first argument, which is of the special type `formula’. Because site identifiers and time points are treated differently by the model, the order matters (see also <a href="#modelspec">model specification</a>).</p>
 <p>Alternatively, one can just pass the data frame as argument 1, and explictly tell <code>trim</code> in which columns the counts etc are:</p>
-<pre class="sourceCode r" id="cb3"><code class="sourceCode r"><div class="sourceLine" id="cb3-1" data-line-number="1">m1 &lt;-<span class="st"> </span><span class="kw">trim</span>(skylark, <span class="dt">count_col=</span><span class="st">&quot;count&quot;</span>, <span class="dt">site_col=</span><span class="st">&quot;site&quot;</span>, <span class="dt">year_col=</span><span class="st">&quot;time&quot;</span>, <span class="dt">model=</span><span class="dv">2</span>)</div></code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">m1 &lt;-<span class="st"> </span><span class="kw">trim</span>(skylark, <span class="dt">count_col=</span><span class="st">&quot;count&quot;</span>, <span class="dt">site_col=</span><span class="st">&quot;site&quot;</span>, <span class="dt">year_col=</span><span class="st">&quot;time&quot;</span>, <span class="dt">model=</span><span class="dv">2</span>)</a></code></pre></div>
 <p>Note that although the name <code>year_col</code> suggests that counts must be on an annual interval, this is not necesarily the case.</p>
 <p>The result is an object of class <code>trim</code>. Just like with objects of class <code>lm</code>, its various components can be extracted using specialized functions. Here are some examples.</p>
-<pre class="sourceCode r" id="cb4"><code class="sourceCode r"><div class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">summary</span>(m1) <span class="co"># summarize the model</span></div>
-<div class="sourceLine" id="cb4-2" data-line-number="2"><span class="co">#&gt; Call:</span></div>
-<div class="sourceLine" id="cb4-3" data-line-number="3"><span class="co">#&gt; tools::buildVignettes(dir = &quot;.&quot;, tangle = TRUE)</span></div>
-<div class="sourceLine" id="cb4-4" data-line-number="4"><span class="co">#&gt; </span></div>
-<div class="sourceLine" id="cb4-5" data-line-number="5"><span class="co">#&gt; Model  : 2</span></div>
-<div class="sourceLine" id="cb4-6" data-line-number="6"><span class="co">#&gt; Method : ML (Convergence reached after 3 iterations)</span></div>
-<div class="sourceLine" id="cb4-7" data-line-number="7"><span class="co">#&gt; </span></div>
-<div class="sourceLine" id="cb4-8" data-line-number="8"><span class="co">#&gt; Coefficients:</span></div>
-<div class="sourceLine" id="cb4-9" data-line-number="9"><span class="co">#&gt;   from upto        add     se_add      mul     se_mul</span></div>
-<div class="sourceLine" id="cb4-10" data-line-number="10"><span class="co">#&gt; 1    1    8 0.05482546 0.01043636 1.056356 0.01102452</span></div>
-<div class="sourceLine" id="cb4-11" data-line-number="11"><span class="co">#&gt; </span></div>
-<div class="sourceLine" id="cb4-12" data-line-number="12"><span class="co">#&gt; </span></div>
-<div class="sourceLine" id="cb4-13" data-line-number="13"><span class="co">#&gt; Goodness of fit:</span></div>
-<div class="sourceLine" id="cb4-14" data-line-number="14"><span class="co">#&gt;               Chi-square = 210.53, df=146, p=0.0004</span></div>
-<div class="sourceLine" id="cb4-15" data-line-number="15"><span class="co">#&gt;         Likelihood Ratio = 204.63, df=146, p=0.0010</span></div>
-<div class="sourceLine" id="cb4-16" data-line-number="16"><span class="co">#&gt;   AIC (up to a constant) = -87.37</span></div></code></pre>
-<pre class="sourceCode r" id="cb5"><code class="sourceCode r"><div class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">totals</span>(m1) <span class="co"># Return time-totals</span></div>
-<div class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">#&gt;   time imputed se_imp</span></div>
-<div class="sourceLine" id="cb5-3" data-line-number="3"><span class="co">#&gt; 1    1     438     21</span></div>
-<div class="sourceLine" id="cb5-4" data-line-number="4"><span class="co">#&gt; 2    2     392     20</span></div>
-<div class="sourceLine" id="cb5-5" data-line-number="5"><span class="co">#&gt; 3    3     432     21</span></div>
-<div class="sourceLine" id="cb5-6" data-line-number="6"><span class="co">#&gt; 4    4     433     21</span></div>
-<div class="sourceLine" id="cb5-7" data-line-number="7"><span class="co">#&gt; 5    5     474     22</span></div>
-<div class="sourceLine" id="cb5-8" data-line-number="8"><span class="co">#&gt; 6    6     521     23</span></div>
-<div class="sourceLine" id="cb5-9" data-line-number="9"><span class="co">#&gt; 7    7     556     25</span></div>
-<div class="sourceLine" id="cb5-10" data-line-number="10"><span class="co">#&gt; 8    8     591     28</span></div></code></pre>
-<pre class="sourceCode r" id="cb6"><code class="sourceCode r"><div class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">gof</span>(m1) <span class="co"># Retrieve goodness-of-fit</span></div>
-<div class="sourceLine" id="cb6-2" data-line-number="2"><span class="co">#&gt; Goodness of fit:</span></div>
-<div class="sourceLine" id="cb6-3" data-line-number="3"><span class="co">#&gt;               Chi-square = 210.53, df=146, p=0.0004</span></div>
-<div class="sourceLine" id="cb6-4" data-line-number="4"><span class="co">#&gt;         Likelihood Ratio = 204.63, df=146, p=0.0010</span></div>
-<div class="sourceLine" id="cb6-5" data-line-number="5"><span class="co">#&gt;   AIC (up to a constant) = -87.37</span></div></code></pre>
-<pre class="sourceCode r" id="cb7"><code class="sourceCode r"><div class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">coefficients</span>(m1) <span class="co"># Extract the coefficients</span></div>
-<div class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">#&gt;   from upto        add     se_add      mul     se_mul</span></div>
-<div class="sourceLine" id="cb7-3" data-line-number="3"><span class="co">#&gt; 1    1    8 0.05482546 0.01043636 1.056356 0.01102452</span></div></code></pre>
-<pre class="sourceCode r" id="cb8"><code class="sourceCode r"><div class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">plot</span>(<span class="kw">overall</span>(m1)) <span class="co"># Plot with overall slope</span></div></code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">summary</span>(m1) <span class="co"># summarize the model</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="co">#&gt; Call:</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="co">#&gt; tools::buildVignettes(dir = &quot;.&quot;, tangle = TRUE)</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="co">#&gt; Model  : 2</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="co">#&gt; Method : ML (Convergence reached after 3 iterations)</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb4-8" data-line-number="8"><span class="co">#&gt; Coefficients:</span></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9"><span class="co">#&gt;   from upto        add     se_add      mul     se_mul</span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10"><span class="co">#&gt; 1    1    8 0.05482546 0.01043636 1.056356 0.01102452</span></a>
+<a class="sourceLine" id="cb4-11" data-line-number="11"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb4-12" data-line-number="12"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13"><span class="co">#&gt; Goodness of fit:</span></a>
+<a class="sourceLine" id="cb4-14" data-line-number="14"><span class="co">#&gt;               Chi-square = 210.53, df=146, p=0.0004</span></a>
+<a class="sourceLine" id="cb4-15" data-line-number="15"><span class="co">#&gt;         Likelihood Ratio = 204.63, df=146, p=0.0010</span></a>
+<a class="sourceLine" id="cb4-16" data-line-number="16"><span class="co">#&gt;   AIC (up to a constant) = -87.37</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">totals</span>(m1) <span class="co"># Return time-totals</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">#&gt;   time imputed se_imp</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="co">#&gt; 1    1     438     21</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="co">#&gt; 2    2     392     20</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="co">#&gt; 3    3     432     21</span></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"><span class="co">#&gt; 4    4     433     21</span></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="co">#&gt; 5    5     474     22</span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"><span class="co">#&gt; 6    6     521     23</span></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="co">#&gt; 7    7     556     25</span></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10"><span class="co">#&gt; 8    8     591     28</span></a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">gof</span>(m1) <span class="co"># Retrieve goodness-of-fit</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="co">#&gt; Goodness of fit:</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co">#&gt;               Chi-square = 210.53, df=146, p=0.0004</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="co">#&gt;         Likelihood Ratio = 204.63, df=146, p=0.0010</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="co">#&gt;   AIC (up to a constant) = -87.37</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">coefficients</span>(m1) <span class="co"># Extract the coefficients</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">#&gt;   from upto        add     se_add      mul     se_mul</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="co">#&gt; 1    1    8 0.05482546 0.01043636 1.056356 0.01102452</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">plot</span>(<span class="kw">overall</span>(m1)) <span class="co"># Plot with overall slope</span></a></code></pre></div>
 <p><img src="data:image/png;base64,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CCCAAAIEUH4DCCCAAAIIIIAAAlEVIIBGlZuDIYAAAggggAACCBBA+Q0ggAACCCCAAAIIRFWAABpVbg6GAAIIIIAAAgggQADlN4AAAggggAACCCAQVQECaFS5ORgCCCCAAAIIIIAAAZTfAAIIIIAAAggggEBUBQigUeXmYAgggAACCCCAAAIEUH4DCCCAAAIIIIAAAlEVIIBGlZuDIYAAAggggAACCBBA+Q0ggAACCCCAAAIIRFWAABpVbg6GAAIIIIAAAgggQADlN4AAAggggAACCCAQVQECaFS5ORgCCCCAAAIIIIAAAZTfAAIIIIAAAggggEBUBQigUeXmYAgggAACCCCAAAIEUH4DCCCAAAIIIIAAAlEVIIBGlZuDIYAAAggggAACCBBA+Q0ggAACCCCAAAIIRFWAABpVbg6GAAIIIIAAAgggQADlN4AAAggggAACCCAQVQECaFS5ORgCCCCAAAIIIIAAAZTfAAIIIIAAAggggEBUBQigUeXmYAgggAACCCCAAAIEUH4DCCCAAAIIIIAAAlEVIIBGlZuDIYAAAggggAACCBBA+Q0ggAACCCCAAAIIRFWAABpVbg6GAAIIIIAAAgggQADlN4AAAggggAACCCAQVQECaFS5ORgCCCCAAAIIIIAAAZTfAAIIIIAAAggggEBUBQigUeXmYAgggAACCCCAAAIEUH4DCCCAAAIIIIAAAlEVIIBGlZuDIYAAAggggAACCBBA+Q0ggAACCCCAAAIIRFWAABpVbg6GAAIIIIAAAgggQADlN4AAAggggAACCCAQVQECaFS5ORgCCCCAAAIIIIAAAZTfAAIIIIAAAggggEBUBQigUeXmYAgggAACCCCAAAIEUH4DCCCAAAIIIIAAAlEVIIBGlZuDIYAAAggggAACCKRC0DmBX//61/Lwww9LTk5O53bApxBAAAEEEEAAgR4QyMjIkL/97W+SlZXVA3vvnl0muUzpnl0l1l7OOecc+bd/+zcCaGJ97VwtAggggAACMS8wa9Ysee+99+Sss86K2XOlBrSTX01qaqpkZ2fL+eef38k98DEEEEAAAQQQQKD7BUpKSrp/p928R+4B7WZQdocAAggggAACCCAQWoAAGtqHtQgggAACCCCAAALdLEAA7WZQdocAAggggAACCCAQWoAAGtqHtQgggAACCCCAAALdLEAA7WZQdocA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" /><!-- --></p>
 <p>These are just a few of of the functions that can be used to analyse the model. See any of their help files for a complete list of links to all analyses functions.</p>
 </div>
@@ -365,77 +398,77 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <li>All other variables on the right-hand-side are interpreted as covariates.</li>
 </ul>
 <p>For example, to use the variable <code>Habitat</code> as covariate when analysing the <code>skylark</code> dataset (under model 2) one does the following.</p>
-<pre class="sourceCode r" id="cb9"><code class="sourceCode r"><div class="sourceLine" id="cb9-1" data-line-number="1">m2 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>Habitat, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span>)</div></code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1">m2 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>Habitat, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span>)</a></code></pre></div>
 <p>It is also possible to apply weights by specifyinga <code>weights</code> argument. The TRIM options <code>overdisp</code> (for overdispersion) and <code>serialcor</code> (for serial correlation), are simple <code>TRUE/FALSE</code> toggles. The breaks of the piecewise loglinear model can be specified with the <code>changepoints</code> option. The <code>trim</code> function will give an error when too little observations are present in a time segment, except when the <code>autodelete</code> option is set to <code>TRUE</code>. In that case time segments are combined until enough observations are present for a model to be estimated. See <code>?trim</code> for a precise description of all options. Below is an example where we specify the maximum number of changepoints and let <code>trim</code> delete change points where necessary.</p>
-<pre class="sourceCode r" id="cb10"><code class="sourceCode r"><div class="sourceLine" id="cb10-1" data-line-number="1">m3 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>Habitat, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span></div>
-<div class="sourceLine" id="cb10-2" data-line-number="2">     , <span class="dt">overdisp =</span> <span class="ot">TRUE</span>, <span class="dt">serialcor =</span> <span class="ot">TRUE</span>, <span class="dt">changepoints=</span><span class="dv">1</span><span class="op">:</span><span class="dv">7</span>, <span class="dt">autodelete=</span><span class="ot">TRUE</span>)</div>
-<div class="sourceLine" id="cb10-3" data-line-number="3">m3<span class="op">$</span>changepoints</div>
-<div class="sourceLine" id="cb10-4" data-line-number="4"><span class="co">#&gt; [1] 1 2 3 4 5 6 7</span></div></code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">m3 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>Habitat, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">     , <span class="dt">overdisp =</span> <span class="ot">TRUE</span>, <span class="dt">serialcor =</span> <span class="ot">TRUE</span>, <span class="dt">changepoints=</span><span class="dv">1</span><span class="op">:</span><span class="dv">7</span>, <span class="dt">autodelete=</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">m3<span class="op">$</span>changepoints</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="co">#&gt; [1] 1 2 3 4 5 6 7</span></a></code></pre></div>
 <p>In this case, no change points are deleted.</p>
 <p>In this example, the data sets consists of 8 time points, so time points 1 to 7 are explicitly specified as change point. This notation, which requires the prior identification of the number of time points present within the data, can be replaced by the more convenient expression <code>changepoints=&quot;all&quot;</code>.</p>
 <p>Alternatively the <code>stepwise</code> algorithm can be used. This algorithm removes changepoints when the slope does not change significantly from before to after a changepoint, yielding a simpler (more sparse) model.</p>
-<pre class="sourceCode r" id="cb11"><code class="sourceCode r"><div class="sourceLine" id="cb11-1" data-line-number="1">m4 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>Habitat, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span></div>
-<div class="sourceLine" id="cb11-2" data-line-number="2">     , <span class="dt">overdisp =</span> <span class="ot">TRUE</span>, <span class="dt">serialcor =</span> <span class="ot">TRUE</span>, <span class="dt">changepoints=</span><span class="dv">1</span><span class="op">:</span><span class="dv">7</span>, <span class="dt">stepwise =</span> <span class="ot">TRUE</span>)</div>
-<div class="sourceLine" id="cb11-3" data-line-number="3">m4<span class="op">$</span>changepoints</div>
-<div class="sourceLine" id="cb11-4" data-line-number="4"><span class="co">#&gt; [1] 1 2</span></div></code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">m4 &lt;-<span class="st"> </span><span class="kw">trim</span>(count <span class="op">~</span><span class="st"> </span>site <span class="op">+</span><span class="st"> </span>time <span class="op">+</span><span class="st"> </span>Habitat, <span class="dt">data=</span>skylark, <span class="dt">model=</span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">     , <span class="dt">overdisp =</span> <span class="ot">TRUE</span>, <span class="dt">serialcor =</span> <span class="ot">TRUE</span>, <span class="dt">changepoints=</span><span class="dv">1</span><span class="op">:</span><span class="dv">7</span>, <span class="dt">stepwise =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">m4<span class="op">$</span>changepoints</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4"><span class="co">#&gt; [1] 1 2</span></a></code></pre></div>
 <p>Again, the explicit setting of initial changepoints can be replaced by the more convenient <code>changepoints=&quot;auto&quot;</code>, which combines <code>changepoints=&quot;all&quot;</code> with <code>stepwise=TRUE</code>.</p>
 </div>
-<div id="trim-command-files" class="section level2">
+<div id="tcf" class="section level2">
 <h2>TRIM Command Files</h2>
 <p>The original TRIM software can be controlled with text files containing a series of commands that specify both the location and format of the data, an the model (or models) to compute. Such TRIM command files (usually stored with the extension <code>.tcf</code>) should be considered legacy but for backwards compatability they can be used from R.</p>
 <p>To try this, execute the code below to create a <code>tcf</code> file and a TRIM data file in the current working directory of R.</p>
-<pre class="sourceCode r" id="cb12"><code class="sourceCode r"><div class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">library</span>(rtrim)</div>
-<div class="sourceLine" id="cb12-2" data-line-number="2">tmp &lt;-<span class="st"> &quot;FILE skylark.dat</span></div>
-<div class="sourceLine" id="cb12-3" data-line-number="3"><span class="st">TITLE  skylark-1d</span></div>
-<div class="sourceLine" id="cb12-4" data-line-number="4"><span class="st">NTIMES 8</span></div>
-<div class="sourceLine" id="cb12-5" data-line-number="5"><span class="st">NCOVARS 2</span></div>
-<div class="sourceLine" id="cb12-6" data-line-number="6"><span class="st">LABELS</span></div>
-<div class="sourceLine" id="cb12-7" data-line-number="7"><span class="st">Habitat</span></div>
-<div class="sourceLine" id="cb12-8" data-line-number="8"><span class="st">Cov2</span></div>
-<div class="sourceLine" id="cb12-9" data-line-number="9"><span class="st">END</span></div>
-<div class="sourceLine" id="cb12-10" data-line-number="10"><span class="st">MISSING 999</span></div>
-<div class="sourceLine" id="cb12-11" data-line-number="11"><span class="st">WEIGHT Absent</span></div>
-<div class="sourceLine" id="cb12-12" data-line-number="12"><span class="st">COMMENT Example 1; using linear trend model</span></div>
-<div class="sourceLine" id="cb12-13" data-line-number="13"><span class="st">WEIGHTING off</span></div>
-<div class="sourceLine" id="cb12-14" data-line-number="14"><span class="st">OVERDISP on</span></div>
-<div class="sourceLine" id="cb12-15" data-line-number="15"><span class="st">SERIALCOR on</span></div>
-<div class="sourceLine" id="cb12-16" data-line-number="16"><span class="st">MODEL 2</span></div>
-<div class="sourceLine" id="cb12-17" data-line-number="17"><span class="st">&quot;</span></div>
-<div class="sourceLine" id="cb12-18" data-line-number="18"><span class="kw">write</span>(tmp,<span class="dt">file=</span><span class="st">&quot;skylark.tcf&quot;</span>)</div>
-<div class="sourceLine" id="cb12-19" data-line-number="19"><span class="kw">data</span>(skylark)</div>
-<div class="sourceLine" id="cb12-20" data-line-number="20">skylark[<span class="kw">is.na</span>(skylark)] &lt;-<span class="st"> </span><span class="dv">999</span></div>
-<div class="sourceLine" id="cb12-21" data-line-number="21"><span class="kw">write.table</span>(skylark,<span class="dt">file=</span><span class="st">&quot;skylark.dat&quot;</span>,<span class="dt">col.names=</span><span class="ot">FALSE</span>,<span class="dt">row.names=</span><span class="ot">FALSE</span>)</div></code></pre>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">library</span>(rtrim)</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">tmp &lt;-<span class="st"> &quot;FILE skylark.dat</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="st">TITLE  skylark-1d</span></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4"><span class="st">NTIMES 8</span></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="st">NCOVARS 2</span></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6"><span class="st">LABELS</span></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7"><span class="st">Habitat</span></a>
+<a class="sourceLine" id="cb12-8" data-line-number="8"><span class="st">Cov2</span></a>
+<a class="sourceLine" id="cb12-9" data-line-number="9"><span class="st">END</span></a>
+<a class="sourceLine" id="cb12-10" data-line-number="10"><span class="st">MISSING 999</span></a>
+<a class="sourceLine" id="cb12-11" data-line-number="11"><span class="st">WEIGHT Absent</span></a>
+<a class="sourceLine" id="cb12-12" data-line-number="12"><span class="st">COMMENT Example 1; using linear trend model</span></a>
+<a class="sourceLine" id="cb12-13" data-line-number="13"><span class="st">WEIGHTING off</span></a>
+<a class="sourceLine" id="cb12-14" data-line-number="14"><span class="st">OVERDISP on</span></a>
+<a class="sourceLine" id="cb12-15" data-line-number="15"><span class="st">SERIALCOR on</span></a>
+<a class="sourceLine" id="cb12-16" data-line-number="16"><span class="st">MODEL 2</span></a>
+<a class="sourceLine" id="cb12-17" data-line-number="17"><span class="st">&quot;</span></a>
+<a class="sourceLine" id="cb12-18" data-line-number="18"><span class="kw">write</span>(tmp,<span class="dt">file=</span><span class="st">&quot;skylark.tcf&quot;</span>)</a>
+<a class="sourceLine" id="cb12-19" data-line-number="19"><span class="kw">data</span>(skylark)</a>
+<a class="sourceLine" id="cb12-20" data-line-number="20">skylark[<span class="kw">is.na</span>(skylark)] &lt;-<span class="st"> </span><span class="dv">999</span></a>
+<a class="sourceLine" id="cb12-21" data-line-number="21"><span class="kw">write.table</span>(skylark,<span class="dt">file=</span><span class="st">&quot;skylark.dat&quot;</span>,<span class="dt">col.names=</span><span class="ot">FALSE</span>,<span class="dt">row.names=</span><span class="ot">FALSE</span>)</a></code></pre></div>
 <p>Executing a TRIM command file is as easy as reading the file using <code>read_tcf</code> and passing the result to <code>trim</code>.</p>
-<pre class="sourceCode r" id="cb13"><code class="sourceCode r"><div class="sourceLine" id="cb13-1" data-line-number="1">tc &lt;-<span class="st"> </span><span class="kw">read_tcf</span>(<span class="st">&quot;skylark.tcf&quot;</span>)</div>
-<div class="sourceLine" id="cb13-2" data-line-number="2">m &lt;-<span class="st"> </span><span class="kw">trim</span>(tc)</div></code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">tc &lt;-<span class="st"> </span><span class="kw">read_tcf</span>(<span class="st">&quot;skylark.tcf&quot;</span>)</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">m &lt;-<span class="st"> </span><span class="kw">trim</span>(tc)</a></code></pre></div>
 <p>The resulting <code>trim</code> object can be evaluated as described above. For example</p>
-<pre class="sourceCode r" id="cb14"><code class="sourceCode r"><div class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">wald</span>(m)</div>
-<div class="sourceLine" id="cb14-2" data-line-number="2"><span class="co">#&gt; Wald test for significance of slope parameter</span></div>
-<div class="sourceLine" id="cb14-3" data-line-number="3"><span class="co">#&gt;   Wald = 11.69, df=1, p=0.000630</span></div></code></pre>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">wald</span>(m)</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="co">#&gt; Wald test for significance of slope parameter</span></a>
+<a class="sourceLine" id="cb14-3" data-line-number="3"><span class="co">#&gt;   Wald = 11.69, df=1, p=0.000630</span></a></code></pre></div>
 <p>The object <code>tc</code>, resulting from <code>read_tcf</code> is an object of class <code>trimcommand</code>. It stores all commands defined in the TRIM command file. Note that logical parameters such as <code>WEIGHT</code> are transformed to <code>logical</code> in R.</p>
-<pre class="sourceCode r" id="cb15"><code class="sourceCode r"><div class="sourceLine" id="cb15-1" data-line-number="1">tc</div>
-<div class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">#&gt; Object of class trimcommand:</span></div>
-<div class="sourceLine" id="cb15-3" data-line-number="3"><span class="co">#&gt;         file: skylark.dat</span></div>
-<div class="sourceLine" id="cb15-4" data-line-number="4"><span class="co">#&gt;        title: skylark-1d</span></div>
-<div class="sourceLine" id="cb15-5" data-line-number="5"><span class="co">#&gt;       ntimes: 8</span></div>
-<div class="sourceLine" id="cb15-6" data-line-number="6"><span class="co">#&gt;      ncovars: 2</span></div>
-<div class="sourceLine" id="cb15-7" data-line-number="7"><span class="co">#&gt;       labels: Habitat, Cov2</span></div>
-<div class="sourceLine" id="cb15-8" data-line-number="8"><span class="co">#&gt;      missing: 999</span></div>
-<div class="sourceLine" id="cb15-9" data-line-number="9"><span class="co">#&gt;       weight: FALSE</span></div>
-<div class="sourceLine" id="cb15-10" data-line-number="10"><span class="co">#&gt;      comment: Example 1; using linear trend model</span></div>
-<div class="sourceLine" id="cb15-11" data-line-number="11"><span class="co">#&gt;    weighting: FALSE</span></div>
-<div class="sourceLine" id="cb15-12" data-line-number="12"><span class="co">#&gt;    serialcor: TRUE</span></div>
-<div class="sourceLine" id="cb15-13" data-line-number="13"><span class="co">#&gt;     overdisp: TRUE</span></div>
-<div class="sourceLine" id="cb15-14" data-line-number="14"><span class="co">#&gt;     basetime: </span></div>
-<div class="sourceLine" id="cb15-15" data-line-number="15"><span class="co">#&gt;        model: 2</span></div>
-<div class="sourceLine" id="cb15-16" data-line-number="16"><span class="co">#&gt;   covariates: </span></div>
-<div class="sourceLine" id="cb15-17" data-line-number="17"><span class="co">#&gt; changepoints: </span></div>
-<div class="sourceLine" id="cb15-18" data-line-number="18"><span class="co">#&gt;     stepwise: FALSE</span></div>
-<div class="sourceLine" id="cb15-19" data-line-number="19"><span class="co">#&gt;   autodelete: FALSE</span></div>
-<div class="sourceLine" id="cb15-20" data-line-number="20"><span class="co">#&gt;  outputfiles: </span></div>
-<div class="sourceLine" id="cb15-21" data-line-number="21"><span class="co">#&gt; overallchangepoints: </span></div>
-<div class="sourceLine" id="cb15-22" data-line-number="22"><span class="co">#&gt;    impcovout: FALSE</span></div>
-<div class="sourceLine" id="cb15-23" data-line-number="23"><span class="co">#&gt;        covin: FALSE</span></div></code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">tc</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">#&gt; Object of class trimcommand:</span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="co">#&gt;         file: skylark.dat</span></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4"><span class="co">#&gt;        title: skylark-1d</span></a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="co">#&gt;       ntimes: 8</span></a>
+<a class="sourceLine" id="cb15-6" data-line-number="6"><span class="co">#&gt;      ncovars: 2</span></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7"><span class="co">#&gt;       labels: Habitat, Cov2</span></a>
+<a class="sourceLine" id="cb15-8" data-line-number="8"><span class="co">#&gt;      missing: 999</span></a>
+<a class="sourceLine" id="cb15-9" data-line-number="9"><span class="co">#&gt;       weight: FALSE</span></a>
+<a class="sourceLine" id="cb15-10" data-line-number="10"><span class="co">#&gt;      comment: Example 1; using linear trend model</span></a>
+<a class="sourceLine" id="cb15-11" data-line-number="11"><span class="co">#&gt;    weighting: FALSE</span></a>
+<a class="sourceLine" id="cb15-12" data-line-number="12"><span class="co">#&gt;    serialcor: TRUE</span></a>
+<a class="sourceLine" id="cb15-13" data-line-number="13"><span class="co">#&gt;     overdisp: TRUE</span></a>
+<a class="sourceLine" id="cb15-14" data-line-number="14"><span class="co">#&gt;     basetime: </span></a>
+<a class="sourceLine" id="cb15-15" data-line-number="15"><span class="co">#&gt;        model: 2</span></a>
+<a class="sourceLine" id="cb15-16" data-line-number="16"><span class="co">#&gt;   covariates: </span></a>
+<a class="sourceLine" id="cb15-17" data-line-number="17"><span class="co">#&gt; changepoints: </span></a>
+<a class="sourceLine" id="cb15-18" data-line-number="18"><span class="co">#&gt;     stepwise: FALSE</span></a>
+<a class="sourceLine" id="cb15-19" data-line-number="19"><span class="co">#&gt;   autodelete: FALSE</span></a>
+<a class="sourceLine" id="cb15-20" data-line-number="20"><span class="co">#&gt;  outputfiles: </span></a>
+<a class="sourceLine" id="cb15-21" data-line-number="21"><span class="co">#&gt; overallchangepoints: </span></a>
+<a class="sourceLine" id="cb15-22" data-line-number="22"><span class="co">#&gt;    impcovout: FALSE</span></a>
+<a class="sourceLine" id="cb15-23" data-line-number="23"><span class="co">#&gt;        covin: FALSE</span></a></code></pre></div>
 <p><strong>NOTE.</strong> Be aware that R has its own present working directory. If relative paths (that is, file names not starting with the full path to their location) are used in the TRIM command file, R will interpret them as relative to the current working directory.</p>
 </div>
 <div id="trim-data-files" class="section level2">
@@ -445,27 +478,30 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="utility-functions" class="section level2">
 <h2>Utility functions</h2>
 <p>An overview of count data can be obtained with the function <code>count_summary</code></p>
-<pre class="sourceCode r" id="cb16"><code class="sourceCode r"><div class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">data</span>(skylark)</div>
-<div class="sourceLine" id="cb16-2" data-line-number="2"><span class="kw">count_summary</span>(skylark)</div>
-<div class="sourceLine" id="cb16-3" data-line-number="3"><span class="co">#&gt; Total number of sites                   55</span></div>
-<div class="sourceLine" id="cb16-4" data-line-number="4"><span class="co">#&gt; Sites without positive counts (0): </span></div>
-<div class="sourceLine" id="cb16-5" data-line-number="5"><span class="co">#&gt; Number of observed zero counts            0</span></div>
-<div class="sourceLine" id="cb16-6" data-line-number="6"><span class="co">#&gt; Number of observed positive counts      202</span></div>
-<div class="sourceLine" id="cb16-7" data-line-number="7"><span class="co">#&gt; Total number of observed counts         202</span></div>
-<div class="sourceLine" id="cb16-8" data-line-number="8"><span class="co">#&gt; Number of missing counts                238</span></div>
-<div class="sourceLine" id="cb16-9" data-line-number="9"><span class="co">#&gt; Total number of counts                  440</span></div></code></pre>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">data</span>(skylark)</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="kw">count_summary</span>(skylark)</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="co">#&gt; Total number of sites                   55</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"><span class="co">#&gt; Sites without positive counts (0): </span></a>
+<a class="sourceLine" id="cb16-5" data-line-number="5"><span class="co">#&gt; Number of observed zero counts            0</span></a>
+<a class="sourceLine" id="cb16-6" data-line-number="6"><span class="co">#&gt; Number of observed positive counts      202</span></a>
+<a class="sourceLine" id="cb16-7" data-line-number="7"><span class="co">#&gt; Total number of observed counts         202</span></a>
+<a class="sourceLine" id="cb16-8" data-line-number="8"><span class="co">#&gt; Number of missing counts                238</span></a>
+<a class="sourceLine" id="cb16-9" data-line-number="9"><span class="co">#&gt; Total number of counts                  440</span></a></code></pre></div>
 <p>The result is an overview similar to the one that used to be printed at the start of TRIM output files.</p>
 <p>The TRIM model can only be computed when sufficient data is present. With the function <code>check_observations</code> one can check if a certain model can be computed. Note the use of <code>year_col</code> to specify a non-default column name.</p>
-<pre class="sourceCode r" id="cb17"><code class="sourceCode r"><div class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">check_observations</span>(skylark, <span class="dt">model=</span><span class="dv">2</span>, <span class="dt">year_col=</span><span class="st">&quot;time&quot;</span>, <span class="dt">changepoints=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">4</span>))</div>
-<div class="sourceLine" id="cb17-2" data-line-number="2"><span class="co">#&gt; $sufficient</span></div>
-<div class="sourceLine" id="cb17-3" data-line-number="3"><span class="co">#&gt; [1] TRUE</span></div>
-<div class="sourceLine" id="cb17-4" data-line-number="4"><span class="co">#&gt; </span></div>
-<div class="sourceLine" id="cb17-5" data-line-number="5"><span class="co">#&gt; $errors</span></div>
-<div class="sourceLine" id="cb17-6" data-line-number="6"><span class="co">#&gt; $errors$changepoint</span></div>
-<div class="sourceLine" id="cb17-7" data-line-number="7"><span class="co">#&gt; numeric(0)</span></div></code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">check_observations</span>(skylark, <span class="dt">model=</span><span class="dv">2</span>, <span class="dt">year_col=</span><span class="st">&quot;time&quot;</span>, <span class="dt">changepoints=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">4</span>))</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2"><span class="co">#&gt; $sufficient</span></a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"><span class="co">#&gt; [1] TRUE</span></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb17-5" data-line-number="5"><span class="co">#&gt; $errors</span></a>
+<a class="sourceLine" id="cb17-6" data-line-number="6"><span class="co">#&gt; $errors$changepoint</span></a>
+<a class="sourceLine" id="cb17-7" data-line-number="7"><span class="co">#&gt; numeric(0)</span></a></code></pre></div>
 <p>The result is a <code>list</code> with boolean element <code>sufficient</code>. If <code>sufficient==FALSE</code>, the element <code>errors</code> contains a <code>data.frame</code> with the sites/times/covariates with insufficient counts.</p>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

@@ -107,8 +107,11 @@ If the \code{file} is specified using backslashes to separate directories
 \seealso{
 \href{../doc/Working_with_tcf.html}{Working with TRIM command files and TRIM data files}.
 
-Other modelspec: \code{\link{check_observations}},
-  \code{\link{read_tdf}}, \code{\link{set_trim_verbose}},
-  \code{\link{trimcommand}}, \code{\link{trim}}
+Other modelspec: 
+\code{\link{check_observations}()},
+\code{\link{read_tdf}()},
+\code{\link{set_trim_verbose}()},
+\code{\link{trimcommand}()},
+\code{\link{trim}()}
 }
 \concept{modelspec}

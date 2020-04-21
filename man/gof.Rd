@@ -37,15 +37,21 @@ LR_p <- L$LR$p # get p-value for likelihood ratio
 
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}},
-  \code{\link{confint.trim}}, \code{\link{index}},
-  \code{\link{now_what}}, \code{\link{overall}},
-  \code{\link{overdispersion}},
-  \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{totals}},
-  \code{\link{trim}}, \code{\link{vcov.trim}},
-  \code{\link{wald}}
+Other analyses: 
+\code{\link{coef.trim}()},
+\code{\link{confint.trim}()},
+\code{\link{index}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{totals}()},
+\code{\link{trim}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 }
 \concept{analyses}

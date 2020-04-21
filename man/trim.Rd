@@ -9,12 +9,23 @@
 \usage{
 trim(object, ...)
 
-\method{trim}{data.frame}(object, count_col = "count",
-  site_col = "site", year_col = "year", month_col = NULL,
-  weights_col = NULL, covar_cols = NULL, model = 2,
-  changepoints = ifelse(model == 2, 1L, integer(0)), overdisp = FALSE,
-  serialcor = FALSE, autodelete = TRUE, stepwise = FALSE,
-  covin = list(), ...)
+\method{trim}{data.frame}(
+  object,
+  count_col = "count",
+  site_col = "site",
+  year_col = "year",
+  month_col = NULL,
+  weights_col = NULL,
+  covar_cols = NULL,
+  model = 2,
+  changepoints = ifelse(model == 2, 1L, integer(0)),
+  overdisp = FALSE,
+  serialcor = FALSE,
+  autodelete = TRUE,
+  stepwise = FALSE,
+  covin = list(),
+  ...
+)
 
 \method{trim}{formula}(object, data = NULL, weights = NULL, ...)
 
@@ -271,19 +282,29 @@ plot(overall(m))
   \href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users} for users of the classic Delphi-based TRIM implementation,
   and \href{../doc/rtrim_2_extensions.html}{rtrim 2 extensions} for the major changes from rtrim v.1 to rtrim v.2
 
-Other analyses: \code{\link{coef.trim}},
-  \code{\link{confint.trim}}, \code{\link{gof}},
-  \code{\link{index}}, \code{\link{now_what}},
-  \code{\link{overall}}, \code{\link{overdispersion}},
-  \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{totals}},
-  \code{\link{vcov.trim}}, \code{\link{wald}}
+Other analyses: 
+\code{\link{coef.trim}()},
+\code{\link{confint.trim}()},
+\code{\link{gof}()},
+\code{\link{index}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{totals}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 
-Other modelspec: \code{\link{check_observations}},
-  \code{\link{read_tcf}}, \code{\link{read_tdf}},
-  \code{\link{set_trim_verbose}}, \code{\link{trimcommand}}
+Other modelspec: 
+\code{\link{check_observations}()},
+\code{\link{read_tcf}()},
+\code{\link{read_tdf}()},
+\code{\link{set_trim_verbose}()},
+\code{\link{trimcommand}()}
 }
 \concept{analyses}
 \concept{modelspec}

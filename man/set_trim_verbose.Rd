@@ -18,8 +18,11 @@ and does not write any progress to the screen. After calling
 about running iterations and convergence to the screen during optmization.
 }
 \seealso{
-Other modelspec: \code{\link{check_observations}},
-  \code{\link{read_tcf}}, \code{\link{read_tdf}},
-  \code{\link{trimcommand}}, \code{\link{trim}}
+Other modelspec: 
+\code{\link{check_observations}()},
+\code{\link{read_tcf}()},
+\code{\link{read_tdf}()},
+\code{\link{trimcommand}()},
+\code{\link{trim}()}
 }
 \concept{modelspec}

@@ -18,14 +18,19 @@ list of class \code{trim.coef}
 Extract model coefficients from \code{tof} object
 }
 \seealso{
-Other parse_output: \code{\link{get_estimation_method}},
-  \code{\link{get_gof}}, \code{\link{get_model}},
-  \code{\link{get_n_site}}, \code{\link{get_n_time}},
-  \code{\link{get_overal_imputed_slope}},
-  \code{\link{get_time_indices}},
-  \code{\link{get_time_totals}}, \code{\link{get_version}},
-  \code{\link{get_wald}}, \code{\link{read_tof}},
-  \code{\link{read_vcv}}
+Other parse_output: 
+\code{\link{get_estimation_method}()},
+\code{\link{get_gof}()},
+\code{\link{get_model}()},
+\code{\link{get_n_site}()},
+\code{\link{get_n_time}()},
+\code{\link{get_overal_imputed_slope}()},
+\code{\link{get_time_indices}()},
+\code{\link{get_time_totals}()},
+\code{\link{get_version}()},
+\code{\link{get_wald}()},
+\code{\link{read_tof}()},
+\code{\link{read_vcv}()}
 }
 \concept{parse_output}
 \keyword{internal}

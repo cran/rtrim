@@ -25,7 +25,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
                            constrain_overdisp=1.0, conv_crit=1e-5, max_iter=200,
                            debug=FALSE)
 {
-  if (debug) browser()
+  # if (debug) browser()
 
   alpha_method <- 1     # Choose between 2 methods to compute alpha (1 is recommended)
   graph_debug <- FALSE  # enable graphical display of the model convergence
@@ -174,6 +174,15 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       if (any(is.na(covars[[i]]))) {
         stop(sprintf('NA values not allowed for covariate "%s".', names(covars)[i]), call.=FALSE)
       }
+      # test for covariant types: integer/string/factor are allowd; all will be converted to factor
+      if (class(covars[[i]])=="integer") {
+        covars[[i]] <- as.factor(covars[[i]])
+      } else if (class(covars[[i]])=="character") {
+        covars[[i]] <- as.factor(covars[[i]])
+      }
+      if (!"factor" %in% class(covars[[i]])) {
+        stop(sprintf('Invalid data type for covariate "%s".', names(covars)[i]), call.=FALSE)
+      }
       icovars[[i]] <- as.integer((covars[[i]]))
     }
 
@@ -291,6 +300,40 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     }
   }
 
+  # # New check for sufficient data.
+  # # This test will find the observations that are supposed to provide info for
+  # # both site-parameters and time-parameters.
+  # if (!use.months) {
+  #   I <- dim(f)[1]
+  #   J <- dim(f)[2]
+  #   fpos <- f > 0
+  #   fpos[is.na(fpos)] <- FALSE
+  #   fpos <- fpos * 1L            # Hack to convert logical matrix to a numerical one
+  #   # Create counts for all combinations
+  #   n1 <- apply(fpos, 1, sum)
+  #   n2 <- apply(fpos, 1, sum)
+  #   for (i in 1:I) for (j in 1:J) {
+  #     nn <- n1[i] + n2[j] - fpos[i,j] # row total + col total; correct for combi
+  #     if (nn<2) stop(sprintf("Problem at i=%d, j=%d (%d)", i, j, year_id[j]))
+  #   }
+  # } else {
+  #   I <- dim(f)[1]
+  #   J <- dim(f)[2]
+  #   M <- dim(f)[3]
+  #   fpos <- f > 0
+  #   fpos[is.na(fpos)] <- FALSE
+  #   fpos <- fpos * 1L            # Hack to convert logical matrix to a numerical one
+  #   # Create counts for all planes
+  #   n12 <- apply(fpos, c(1,2), sum)
+  #   n13 <- apply(fpos, c(1,3), sum)
+  #   n23 <- apply(fpos, c(2,3), sum)
+  #   for (i in 200:202) for (j in 1:J) for (m in 1:M) {
+  #     if ((n12[i,j]==1 && n13[i,m]==1) && n23[j,m]==1) {
+  #       cat(sprintf("problem at i=%d j=%d m=%d\n", i,j,m))
+  #     }
+  #   }
+  # }
+
   # TRIM is not intended for extrapolation. Therefore, issue a warning if the first or last
   # time points do not contain positive observations.
   totals <- colSums(f, na.rm=TRUE)
@@ -386,13 +429,18 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   if (model!=2 && length(changepoints) > 0)
     stop(sprintf("Changepoints cannot be specified for model %d", model), call.=FALSE)
 
-  # For model 2, test that changepoints (if any) are in the range [1,J>.
+  # For model 2, test that changepoints (if any) are in the range 1..J-1
   use.changepoints <- model==2 && length(changepoints)>0
   if (use.changepoints) {
-    if (all(changepoints %in% year_id)) {
-      # Convert changepoints in years  to 1..J
+    if (min(changepoints)>=1 && max(changepoints)<nyear) {
+      # case 1: already in 1..J-1
+    } else if (all(changepoints %in% year_id)) {
+      # case 2: actual years (used); convert to 1..J-1
       changepoints <- match(changepoints, year_id)
+    } else {
+      stop("Invalid changepoints specified")
     }
+    # Last checks
     stopifnot(all(changepoints >= 1L))
     stopifnot(all(changepoints < nyear))
     stopifnot(all(diff(changepoints) > 0)) # changepoints must be in incraesing order
@@ -610,6 +658,31 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
   max_dbeta <- 0.0
 
+  check_beta <- function() {
+    problem <- ""
+    if (any(!is.finite(beta))) {
+      problem <- "non-finite beta value"
+      idx <- which(!is.finite(beta))[1]
+    }
+    if (any(beta >  max_beta)) {
+      problem <- "excessive high beta value"
+      idx <- which(beta > max_beta)[1]
+    }
+    if (any(beta < -max_beta)) {
+      problem <- "excessive low beta value"
+      idx <- which(beta < -max_beta)[1]
+    }
+    if (problem != "") {
+      if (model==2) {
+        msg <- sprintf("Model can't be estimated due to %s at changepoint #%d (%d)", problem, idx, year_id[idx])
+      } else if (model==3) {
+        msg <- sprintf("Model can't be estimated due to %s at year #%d (%d)", problem, idx+1, year_id[idx+1])
+      } else stop("Unexpected model:", model)
+      stop(msg, call.=FALSE)
+    }
+
+  }
+
   update_beta <- function(method=c("ML","GEE"))
   {
     # Compute the proposed change in $\beta$.
@@ -623,9 +696,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     stepsize <- 1.0
     for (subiter in 1:max_sub_step) {
       beta  <<- beta0 + stepsize*dbeta
-      if (any(!is.finite(beta))) stop("non-finite beta problem")
-      if (any(beta >  max_beta)) stop("Model non-estimable due to excessive high beta values", call.=FALSE)
-      if (any(beta < -max_beta)) stop("Model non-estimable due to excessive small beta values", call.=FALSE)
+      check_beta()
 
       update_mu(fill=FALSE)
       update_alpha(method)
@@ -824,8 +895,16 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       i_b <<- i_b - t(B_i) %*% (Omega[[i]] - (Omega[[i]] %*% ones %*% t(ones) %*% Omega[[i]]) / d_i) %*% B_i
       U_b <<- U_b + t(B_i) %*% d_mu_i %*% V_inv[[i]] %*% (f_i - mu_i)
     }
-    if (use.beta && any(abs(colSums(i_b))< 1e-12)) stop("Data does not contain enough information to estimate model.", call.=FALSE)
-    # invertable <- class(try(solve(i_b), silent=T))=="matrix"
+    # # PWB todo: the following gerenates a bug in the Grutto user case (Jelle)
+    # print(i_b)
+    # cat("\n")
+    # print(eigen(i_b)$values)
+    # print(colSums(i_b))
+    # print(abs(colSums(i_b)))
+    # if (use.beta && all(abs(colSums(i_b))< 1e-12)) stop("Data does not contain enough information to estimate model.", call.=FALSE)
+
+    #
+    # invertable <- class(try(solve(i_b), silent=T))=="matrix" # not R4.0 compatible; use "matrix" %in% class() instead!
     # if (!invertable) {
     #   browser()
     # }
@@ -1225,13 +1304,13 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       )
       # Covariate categories ($>1$)
       if (use.covars) {
-        prefix = data.frame(covar="baseline", cat=0)
+        prefix = data.frame(covar=factor("baseline"), cat=0)
         coefs <- cbind(prefix, coefs)
         for (i in 1:ncovar) {
           for (j in 2:nclass[i]) {
             idx <- idx + nbeta0
             df <- data.frame(
-              covar  = names(covars)[i],
+              covar  = factor(names(covars)[i]),
               cat    = j,
               time   = 1:J,
               add    = c(0, gamma[idx]),

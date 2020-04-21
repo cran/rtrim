@@ -4,7 +4,9 @@
 \name{oystercatcher}
 \alias{oystercatcher}
 \title{Oystercatcher population data}
-\format{\code{.RData}}
+\format{
+\code{.RData}
+}
 \usage{
 data(oystercatcher)
 }

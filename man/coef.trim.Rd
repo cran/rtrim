@@ -4,8 +4,7 @@
 \alias{coef.trim}
 \title{Extract TRIM model coefficients.}
 \usage{
-\method{coef}{trim}(object, representation = c("standard", "trend",
-  "deviations"), ...)
+\method{coef}{trim}(object, representation = c("standard", "trend", "deviations"), ...)
 }
 \arguments{
 \item{object}{TRIM output structure (i.e., output of a call to \code{trim})}
@@ -90,15 +89,21 @@ z <- trim(count ~ site + time, data=skylark, model=2, overdisp=TRUE)
 coefficients(z)
 }
 \seealso{
-Other analyses: \code{\link{confint.trim}},
-  \code{\link{gof}}, \code{\link{index}},
-  \code{\link{now_what}}, \code{\link{overall}},
-  \code{\link{overdispersion}},
-  \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{totals}},
-  \code{\link{trim}}, \code{\link{vcov.trim}},
-  \code{\link{wald}}
+Other analyses: 
+\code{\link{confint.trim}()},
+\code{\link{gof}()},
+\code{\link{index}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{totals}()},
+\code{\link{trim}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 }
 \concept{analyses}

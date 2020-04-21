@@ -9,9 +9,17 @@
 \usage{
 check_observations(x, ...)
 
-\method{check_observations}{data.frame}(x, model, count_col = "count",
-  year_col = "year", month_col = NULL, covars = character(0),
-  changepoints = numeric(0), eps = 1e-08, ...)
+\method{check_observations}{data.frame}(
+  x,
+  model,
+  count_col = "count",
+  year_col = "year",
+  month_col = NULL,
+  covars = character(0),
+  changepoints = numeric(0),
+  eps = 1e-08,
+  ...
+)
 
 \method{check_observations}{trimcommand}(x, ...)
 
@@ -63,8 +71,11 @@ insufficient counts are found.}
 Check whether there are sufficient observations to run a model
 }
 \seealso{
-Other modelspec: \code{\link{read_tcf}},
-  \code{\link{read_tdf}}, \code{\link{set_trim_verbose}},
-  \code{\link{trimcommand}}, \code{\link{trim}}
+Other modelspec: 
+\code{\link{read_tcf}()},
+\code{\link{read_tdf}()},
+\code{\link{set_trim_verbose}()},
+\code{\link{trimcommand}()},
+\code{\link{trim}()}
 }
 \concept{modelspec}

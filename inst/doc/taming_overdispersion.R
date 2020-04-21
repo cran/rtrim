@@ -1,4 +1,4 @@
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
 )
 rm(list=ls())
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(rtrim)
 data(oystercatcher)
 
@@ -16,11 +16,11 @@ ok <- is.finite(oystercatcher$count) & oystercatcher$count > 0
 count <- oystercatcher$count[ok]
 plot(count, type='p', pch=16, col="red", cex=0.4)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 count <- sort(count)
 plot(count/1000, type='p', pch=16, col="red", cex=0.4, las=TRUE, ylab="count (x1000)")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 cum_count <- cumsum(sort(count, decreasing = TRUE)) # cumulative counts, largest first
 cum_pct <- 100 * cum_count / sum(count)             # express as percentage of total
 n <- length(count)
@@ -30,7 +30,7 @@ points(obs_pct, cum_pct, pch=16, cex=0.3, col="red")
 abline(a=100, b=-1, lty="dashed")
 grid()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 oystercatcher2 <- subset(oystercatcher, year>=2005)
 
 calc_coverage <- function(x) 100*mean(is.finite(x) & x>0)
@@ -39,16 +39,16 @@ coverage <- coverage[order(coverage$count, decreasing=TRUE), ]
 plot(coverage$count, ylab="coverage (%)", pch=16, col=gray(0,0.5), las=1)
 abline(a=50, b=0, col="red")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ok <- subset(coverage, count > 45)
 oystercatcher3 <- subset(oystercatcher2, site %in% ok$site)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 z <- trim(count ~ site + (year+month), data=oystercatcher3, model=3, overdisp=TRUE)
 summary(z)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Retrieve raw observed and modelled counts
 out <- results(z)
 ok  <- is.finite(out$observed)
@@ -75,7 +75,7 @@ for (i in seq_along(skips)) {
 plot(skips, sig2, type='l', col="red", las=1)
 abline(h=0.0, lty="dashed", col="red")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 sig2_alt1 <- numeric(length(skips))
 for (i in seq_along(skips)) {
   rr <- r[skips[i] : n]
@@ -85,7 +85,7 @@ for (i in seq_along(skips)) {
 plot(skips, sig2, type='l', col="red", las=1)
 lines(skips, sig2_alt1, col="blue")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # residuals, and their square
 r <- (f - mu) / sqrt(mu)
 r2 <- r^2
@@ -111,10 +111,10 @@ df <- length(r2) - p
 sig2_alt2 <- sum(r2[ok]) / df
 cat(sprintf("Reduced sig2 from %.1f to %.1f\n", sig2_std, sig2_alt2))
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  z <- trim(..., overdisp=TRUE, constrain_overdisp=3, ...)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 level <- 0.99
 niter <- 10
 sig2_alt3 <- numeric(niter)
@@ -134,10 +134,10 @@ plot(sig2_alt3, type='l', col="red", ylim=range(0,range(sig2_alt3)), las=1)
 points(sig2_alt3, pch=16, col="red")
 text(25,400, sprintf("Convergence at %.1f", sig2_alt3[niter]))
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  z <- trim(..., overdisp=TRUE, constrain_overdisp=0.99, ...)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 z1 <- trim(count ~ site + (year+month), data=oystercatcher3, model=3,
            overdisp=TRUE, constrain_overdisp=0.99)
 z2 <- trim(count ~ site + (year+month), data=oystercatcher3, model=3,

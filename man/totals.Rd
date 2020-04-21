@@ -4,8 +4,7 @@
 \alias{totals}
 \title{Extract time-totals from TRIM output}
 \usage{
-totals(x, which = c("imputed", "fitted", "both"), obs = FALSE,
-  level = NULL)
+totals(x, which = c("imputed", "fitted", "both"), obs = FALSE, level = NULL)
 }
 \arguments{
 \item{x}{TRIM output structure (i.e., output of a call to \code{trim})}
@@ -49,14 +48,21 @@ totals(z, "both") # mimics classic TRIM
 
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}},
-  \code{\link{confint.trim}}, \code{\link{gof}},
-  \code{\link{index}}, \code{\link{now_what}},
-  \code{\link{overall}}, \code{\link{overdispersion}},
-  \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{trim}},
-  \code{\link{vcov.trim}}, \code{\link{wald}}
+Other analyses: 
+\code{\link{coef.trim}()},
+\code{\link{confint.trim}()},
+\code{\link{gof}()},
+\code{\link{index}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{trim}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 }
 \concept{analyses}

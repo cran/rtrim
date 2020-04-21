@@ -4,8 +4,13 @@
 \alias{count_summary}
 \title{Compute a summary of counts}
 \usage{
-count_summary(x, count_col = "count", site_col = "site",
-  year_col = "year", eps = 1e-08)
+count_summary(
+  x,
+  count_col = "count",
+  site_col = "site",
+  year_col = "year",
+  eps = 1e-08
+)
 }
 \arguments{
 \item{x}{A \code{data.frame} with annual counts per site.}

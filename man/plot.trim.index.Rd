@@ -4,8 +4,16 @@
 \alias{plot.trim.index}
 \title{Plot time-indices from trim output.}
 \usage{
-\method{plot}{trim.index}(x, ..., names = NULL, covar = "auto",
-  xlab = "auto", ylab = "Index", pct = FALSE, band = "se")
+\method{plot}{trim.index}(
+  x,
+  ...,
+  names = NULL,
+  covar = "auto",
+  xlab = "auto",
+  ylab = "Index",
+  pct = FALSE,
+  band = "se"
+)
 }
 \arguments{
 \item{x}{an object of class \code{trim.index}, as resulting from e.g. a call to \code{\link{index}}.}
@@ -51,18 +59,26 @@ plot(idx, covar="none")
 
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}},
-  \code{\link{confint.trim}}, \code{\link{gof}},
-  \code{\link{index}}, \code{\link{now_what}},
-  \code{\link{overall}}, \code{\link{overdispersion}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{totals}},
-  \code{\link{trim}}, \code{\link{vcov.trim}},
-  \code{\link{wald}}
+Other analyses: 
+\code{\link{coef.trim}()},
+\code{\link{confint.trim}()},
+\code{\link{gof}()},
+\code{\link{index}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{totals}()},
+\code{\link{trim}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 
-Other graphical post-processing: \code{\link{heatmap}},
-  \code{\link{plot.trim.totals}}
+Other graphical post-processing: 
+\code{\link{heatmap}()},
+\code{\link{plot.trim.totals}()}
 }
 \concept{analyses}
 \concept{graphical post-processing}

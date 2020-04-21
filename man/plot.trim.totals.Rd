@@ -4,8 +4,15 @@
 \alias{plot.trim.totals}
 \title{Plot time-totals from trim output.}
 \usage{
-\method{plot}{trim.totals}(x, ..., names = NULL, xlab = "auto",
-  ylab = "Time totals", leg.pos = "topleft", band = "se")
+\method{plot}{trim.totals}(
+  x,
+  ...,
+  names = NULL,
+  xlab = "auto",
+  ylab = "Time totals",
+  leg.pos = "topleft",
+  band = "se"
+)
 }
 \arguments{
 \item{x}{an object of class \code{trim.totals}, as resulting from e.g. a call to \code{totals}.}
@@ -48,7 +55,8 @@ plot(t1, t2, names=c("with covariates", "without covariates"), main="Skylark", l
 
 }
 \seealso{
-Other graphical post-processing: \code{\link{heatmap}},
-  \code{\link{plot.trim.index}}
+Other graphical post-processing: 
+\code{\link{heatmap}()},
+\code{\link{plot.trim.index}()}
 }
 \concept{graphical post-processing}

@@ -4,8 +4,13 @@
 \alias{index}
 \title{Extract time-indices from TRIM output.}
 \usage{
-index(x, which = c("imputed", "fitted", "both"), covars = FALSE,
-  base = 1, level = NULL)
+index(
+  x,
+  which = c("imputed", "fitted", "both"),
+  covars = FALSE,
+  base = 1,
+  level = NULL
+)
 }
 \arguments{
 \item{x}{an object of class \code{\link{trim}}}
@@ -62,15 +67,21 @@ index(z, base=3)
 index(z, base=1:5)
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}},
-  \code{\link{confint.trim}}, \code{\link{gof}},
-  \code{\link{now_what}}, \code{\link{overall}},
-  \code{\link{overdispersion}},
-  \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{totals}},
-  \code{\link{trim}}, \code{\link{vcov.trim}},
-  \code{\link{wald}}
+Other analyses: 
+\code{\link{coef.trim}()},
+\code{\link{confint.trim}()},
+\code{\link{gof}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{totals}()},
+\code{\link{trim}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 }
 \concept{analyses}

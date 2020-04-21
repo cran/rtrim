@@ -4,8 +4,7 @@
 \alias{confint.trim}
 \title{Compute time-totals confidence interval}
 \usage{
-\method{confint}{trim}(object, parm = c("imputed", "fitted"),
-  level = 0.95, ...)
+\method{confint}{trim}(object, parm = c("imputed", "fitted"), level = 0.95, ...)
 }
 \arguments{
 \item{object}{a TRIM output object}
@@ -26,14 +25,21 @@ z <- trim(count ~ site + year, data=skylark2, model=3)
 CI <- confint(z)
 }
 \seealso{
-Other analyses: \code{\link{coef.trim}}, \code{\link{gof}},
-  \code{\link{index}}, \code{\link{now_what}},
-  \code{\link{overall}}, \code{\link{overdispersion}},
-  \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.overall}}, \code{\link{results}},
-  \code{\link{serial_correlation}},
-  \code{\link{summary.trim}}, \code{\link{totals}},
-  \code{\link{trim}}, \code{\link{vcov.trim}},
-  \code{\link{wald}}
+Other analyses: 
+\code{\link{coef.trim}()},
+\code{\link{gof}()},
+\code{\link{index}()},
+\code{\link{now_what}()},
+\code{\link{overall}()},
+\code{\link{overdispersion}()},
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.overall}()},
+\code{\link{results}()},
+\code{\link{serial_correlation}()},
+\code{\link{summary.trim}()},
+\code{\link{totals}()},
+\code{\link{trim}()},
+\code{\link{vcov.trim}()},
+\code{\link{wald}()}
 }
 \concept{analyses}

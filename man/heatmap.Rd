@@ -4,8 +4,14 @@
 \alias{heatmap}
 \title{Plot a heatmap representation of observed and/or imputed counts.}
 \usage{
-heatmap(z, what = c("data", "imputed", "fitted"), log = TRUE,
-  xlab = "auto", ylab = "Site #", ...)
+heatmap(
+  z,
+  what = c("data", "imputed", "fitted"),
+  log = TRUE,
+  xlab = "auto",
+  ylab = "Site #",
+  ...
+)
 }
 \arguments{
 \item{z}{output of a call to \code{\link{trim}}.}
@@ -44,7 +50,8 @@ heatmap(z,"imputed")
 
 }
 \seealso{
-Other graphical post-processing: \code{\link{plot.trim.index}},
-  \code{\link{plot.trim.totals}}
+Other graphical post-processing: 
+\code{\link{plot.trim.index}()},
+\code{\link{plot.trim.totals}()}
 }
 \concept{graphical post-processing}

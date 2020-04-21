@@ -5,7 +5,9 @@
 \alias{skylark}
 \alias{skylark2}
 \title{Skylark population data}
-\format{\code{.RData}}
+\format{
+\code{.RData}
+}
 \usage{
 data(skylark); data(skylark2)
 }

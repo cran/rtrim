@@ -1,4 +1,4 @@
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -6,7 +6,7 @@ knitr::opts_chunk$set(
   fig.height = 5
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 rm(list=ls()) # Always start with a clean slate
 library(rtrim)
 red   <- "#E41A1C" # Set up some nice colors
@@ -16,7 +16,7 @@ lgray <- gray(0.8)
 mgray <- gray(0.5)
 dgray <- gray(0.2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mu    <- 5.0                            # mean
 sd    <- 2.0                            # standard deviation
 alpha <- 0.05                           # i.e., 95% confidence interval
@@ -54,7 +54,7 @@ mul <- (hi-mu) / sd                     # sd -> CI multiplier
 arrows(mu,yarr, hi,yarr, code=3, length=0.12)
 text(mean(c(mu,hi)), yarr, sprintf("%.2f * s.d.", mul), pos=3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mu <- 0                                 # Standard normal distribution
 sd <- 1.0
 alpha <- 0.05                           # 95% confidence interval
@@ -81,7 +81,7 @@ for (i in 1:length(pp)) {
 # Foreground: CDF
 lines(xcdf,ycdf, col=red, lwd=2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- 5L # Expected value
 x <- 0 : (lambda*3)
 y <- ppois(x, lambda)
@@ -93,7 +93,7 @@ text(lambda, 0.1, expression(lambda), col=mgray, pos=4)
 lines(x, y, type='s', col=red)
 points(x,y, pch=16, col=red)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- 5L # Expected value
 x <- 0 : (lambda*3)
 y <- ppois(x, lambda)
@@ -113,7 +113,7 @@ cdf_to_quantile(0.78, lambda=lambda)
 lines(x, y, type='s', col=red)
 points(x,y, pch=16, col=red)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Plot Poisson distribution (expected value: 10)
 lambda <- 10L # define expected value
 xp <- 0 : (lambda * 3L)
@@ -131,7 +131,7 @@ abline(v=lambda, lty="dashed", col=mgray) # mark expected value
 text(lambda, 0.2, expression(lambda), pos=4, col=mgray)
 legend(0,1, legend=c("Poisson","Gamma"), col=c(red,blue), lty="solid", lwd=2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- 50L # define expected value
 xp <- 0 : (lambda * 3L)
 yp <- ppois(xp, lambda=lambda)
@@ -146,7 +146,7 @@ abline(v=lambda, lty="dashed", col=mgray) # mark expected value
 text(lambda, 0.2, expression(lambda), pos=4, col=mgray)
 legend(0,1, legend=c("Poisson","Gamma"), col=c(red,blue), lty="solid", lwd=2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- exp(seq(log(2.0), log(1000.0), len=100)) # uniform spacing in log-space
 alpha <- 0.05 # 95% CI
 
@@ -166,7 +166,7 @@ idx <- which(lambda>=10)[1]
 text(lambda[idx],umul[idx],"M_hi", pos=3, col=red)
 text(lambda[idx],lmul[idx],"M_lo", pos=1, col=red)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(rtrim)
 # Run basic TRIM model without overdispersion
 data(skylark2)
@@ -187,14 +187,14 @@ plot(tt)
 lines(tt$time, tt$lo, lty="dashed", col=red)
 lines(tt$time, tt$hi, lty="dashed", col=red)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 tt <- totals(m, level=0.95)
 plot(tt)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 plot(tt, band="ci")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mu <- 100L
 sig2 <- c(1, 2, 5, 10)
 n <- length(sig2)
@@ -215,7 +215,7 @@ leg_msg <- sprintf("Overdispersion = %d", sig2)
 leg_msg[1] <- "Poisson"
 legend("topleft", legend=leg_msg, col=colors[1:n], pch=16)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 plot(NULL, NULL, type="n", xlim=range(x), ylim=c(0,1),
      xlab="", ylab="Cumulative distribution function", las=1)
 # Plot discrete distributions: Poisson or Negative Binonmial
@@ -237,7 +237,7 @@ leg_msg <- sprintf("Overdispersion = %d", sig2)
 leg_msg[1] <- "Poisson"
 legend("topleft", legend=leg_msg, col=colors[1:n], pch=16)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- exp(seq(log(2.0), log(1000.0), len=100)) # uniform spacing in log-space
 alpha <- 0.05 # 95% CI
 sig2  <- c(1, 2, 5, 10)
@@ -266,7 +266,7 @@ leg_msg <- sprintf("Overdispersion = %d", sig2)
 leg_msg[1] <- "Poisson"
 legend("bottomright", legend=leg_msg, col=colors[1:n], pch=16)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- 20
 sig2   <- 8
 alpha <- 0.05 # 95% CI
@@ -290,7 +290,7 @@ abline(v=c(lo,hi), lty="dotted", col=green, lwd=2)
 legend("topright", c("mean","std.err","C.I."), lty=c("solid","dashed","dotted"),
        lwd=2, col=c(mgray,blue,green))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- 10
 sig2   <- 12
 alpha <- 0.05 # 95% CI
@@ -314,7 +314,7 @@ abline(v=c(lo,hi), lty="dotted", col=green, lwd=2)
 legend("topright", c("mean","std.err","C.I."), lty=c("solid","dashed","dotted"),
        lwd=2, col=c(mgray,blue,green))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 lambda <- exp(seq(log(2.0), log(1000.0), len=100)) # uniform spacing in log-space
 alpha <- 0.05 # 95% CI
 sig2  <- c(1, 3, 10, 30, 100)
@@ -342,13 +342,13 @@ leg_msg <- sprintf("Overdispersion = %d", sig2)
 leg_msg[1] <- "Poisson"
 legend("bottomright", legend=leg_msg, col=colors[1:n], lty="solid")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Run TRIM with overdispersion
 m1 <- trim(count ~ site + year, data=skylark2, model=3, overdisp=TRUE)
 tt1 <- totals(m1, level=0.95)
 plot(tt1, main=sprintf("Skylark; overdispersion=%.2f", overdispersion(m1)))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 idx <- index(m1, level=0.95)
 plot(idx, pct=TRUE)
 

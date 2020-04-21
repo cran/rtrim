@@ -20,6 +20,21 @@
 #' The values for \code{changepoints} do not depend on \code{changepoints} that were used when
 #' specifying the \code{trim} model (See also the example below).
 #'
+#' Slopes are computed along with associated confidence intervals (CI) for 1\% and 5\% significance levels,
+#' and interpreted using the following table:
+#'
+#' \tabular{ll}{
+#'   \strong{Trend meaning} \tab \strong{Condition} \cr
+#'   Strong increase   (more than 5\% per year) \tab lower CI limit > 0.05\cr
+#'   Moderate increase (less than 5\% per year) \tab lower CI limit > 0\cr
+#'   Moderate decrease (less than 5\% per year) \tab upper CI limit < 0\cr
+#'   Strong decrease   (more than 5\% per year) \tab upper CI limit < -0.05\cr
+#'   Stable            \tab -0.05 < lower < 0 < upper < 0.05\cr
+#'   Uncertain         \tab any other case\cr
+#' }
+#' where trend strength takes precedence over significance,
+#' i.e., a \emph{strong increase (p<0.05)} takes precedence over a \emph{moderate increase (p<0.01)}.
+#'
 #' Note that the original TRIM erroneously assumed that the estimated overall trend
 #' magnitude is t-distributed, while in fact it is normally distributed, which is being used within rtrim.
 #' The option \code{bc=TRUE} can be set to force backward compability, for e.g. comparison purposes.
