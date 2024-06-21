@@ -7,7 +7,7 @@
 read_vcv(file)
 }
 \arguments{
-\item{file}{\\code{[character]} filename}
+\item{file}{\code{[character]} filename}
 }
 \value{
 A matrix of class \code{[numeric]}

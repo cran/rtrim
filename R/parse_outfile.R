@@ -15,13 +15,14 @@ read_tof <- function(file){
   r
 }
 
+#' @keywords internal
 print.tof <- function(x,...){
   cat(x)
 }
 
 #' Read a TRIM3 variance-covariance output file
 #'
-#' @param file \\code{[character]} filename
+#' @param file \code{[character]} filename
 #'
 #' @return A matrix of class \code{[numeric]}
 #'

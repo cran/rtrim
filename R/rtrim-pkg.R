@@ -1,3 +1,4 @@
+#'
 #' Trend and Indices for Monitoring Data
 #'
 #' The TRIM model is used to estimate species populations based on frequent
@@ -16,6 +17,7 @@
 #' \itemize{
 #' \item\href{../doc/Skylark_example.html}{rtrim by example}
 #' \item\href{../doc/rtrim_2_extensions.html}{rtrim 2 extensions}
+#' \item\href{../doc/FAQ.html}{Frequently Asked Questions}
 #' }
 #'
 #' For users of the original Windows TRIM software:
@@ -32,10 +34,12 @@
 #' Enjoy!
 #' The rtrim team of Statistics Netherlands
 #'
-#' @name rtrim-package
-#' @docType package
+# #' @name rtrim-package
+# #' @docType package
+#' @aliases rtrim-package
+"_PACKAGE"
 #' @import methods
-#' @importFrom utils read.table head tail str capture.output
+#' @importFrom utils read.table head tail str capture.output packageVersion
 #' @importFrom grDevices  gray rgb hcl adjustcolor col2rgb
 #' @importFrom graphics lines plot points polygon segments title abline legend par rasterImage rect
 #' @importFrom stats pchisq qchisq pt qt qnorm time setNames quantile qgamma
@@ -47,5 +51,5 @@
 }
 
 .onAttach <- function(libname, pkgname){
-  packageStartupMessage("Welcome to rtrim 2.0.6 Type ?`rtrim-package` to get started.")
+  packageStartupMessage("Welcome to ", pkgname, " version ", packageVersion(pkgname), "; Type ?`rtrim-package` to get started.")
 }

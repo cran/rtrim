@@ -26,9 +26,11 @@ Other analyses:
 \code{\link{overdispersion}()},
 \code{\link{plot.trim.index}()},
 \code{\link{plot.trim.overall}()},
+\code{\link{plot.trim.smooth}()},
 \code{\link{results}()},
 \code{\link{summary.trim}()},
 \code{\link{totals}()},
+\code{\link{trendlines}()},
 \code{\link{trim}()},
 \code{\link{vcov.trim}()},
 \code{\link{wald}()}

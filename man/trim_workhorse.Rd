@@ -21,6 +21,7 @@ trim_workhorse(
   constrain_overdisp = 1,
   conv_crit = 1e-05,
   max_iter = 200,
+  alpha_method = 1,
   debug = FALSE
 )
 }
@@ -53,10 +54,10 @@ trim_workhorse(
 
 \item{max_iter}{maximum number of iterations allowed.}
 
-\item{max_beta}{maximum value for beta parameters}
+\item{alpha_method}{choose between a more precise (1) or robust (2) method to estimate site parameters alpha.}
 }
 \value{
-a list of class \code{trim}, that contains all output, statistiscs, etc.
+a list of class \code{trim}, that contains all output, statistics, etc.
   Usually this information is retrieved by a set of postprocessing functions
 }
 \description{

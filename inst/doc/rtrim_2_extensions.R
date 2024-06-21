@@ -1,4 +1,4 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -151,6 +151,58 @@ plot(tt)
 
 ## -----------------------------------------------------------------------------
 plot(tt, band="ci")
+
+## -----------------------------------------------------------------------------
+tt <- totals(m, long=TRUE)
+head(tt)
+
+lo <- tt$value - 1.96 * tt$SE # Assume normal distribution
+hi <- tt$value + 1.96 * tt$SE
+
+# create an empty plot with sufficient space
+xrange = range(tt$year)
+yrange = range(lo, hi)
+plot(xrange, yrange, type='n', xlab="Year", ylab="Time-totals")
+# plot the time series and error bars
+segments(tt$year, lo, tt$year, hi, col="red", lwd=2)
+lines(tt$year, tt$value, col="red", lwd=2)
+
+## -----------------------------------------------------------------------------
+tl <- trendlines(overall(m))     # collect overall trend line
+print(tl)
+
+tt <- totals(m, long=TRUE)       # collect time-totals
+
+# define plot limits
+xr <- range(tt$year)
+yr <- range(tl$lo, tl$hi, tt$value)
+plot(xr, yr, type='n', xlab="Year", ylab="Total counts")
+
+# Plot uncertainty band
+ubx <- c(tl$year, rev(tl$year))
+uby <- c(tl$lo, rev(tl$hi))
+polygon(ubx, uby, col=gray(0.9), border=NA)
+
+# Plot trend line
+lines(tl$year, tl$value, col="black", lwd=2)
+
+# Plot time-totals
+lines(tt$year, tt$value, col="red", lwd=2)
+points(tt$year, tt$value, col="red", pch=16, cex=1.5)
+
+## -----------------------------------------------------------------------------
+tt  <- totals(m)
+idx <- index(m)
+par(mfrow=c(1,2))
+plot(tt, main="Time-totals", ylab=NA)
+plot(idx, main="Index", ylab=NA)
+
+## -----------------------------------------------------------------------------
+fidx <- index(m, method="formal") # same as just index(m)
+sidx <- index(m, method="scaled")
+par(mfrow=c(1,2))
+plot(fidx, main="Formal approach")
+plot(sidx, main="Scaled approach")
 
 ## -----------------------------------------------------------------------------
 m <- trim(count ~ site + year, data=skylark2, model=3)

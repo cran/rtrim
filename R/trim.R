@@ -1,10 +1,10 @@
 #' Estimate TRIM model parameters.
 #'
-#' Given some count observations, estimate a TRIM model and use these to impute the data set if nescessary.
+#' Given some count observations, estimate a TRIM model and use these to impute the data set if necessary.
 #'
 #' @section Models:
 #'
-#' The purpose of \code{trim} is to estimate population totals over time,
+#' The purpose of \code{trim()} is to estimate population totals over time,
 #' based on a set of counts \eqn{f_{ij}} at sites \eqn{i=1,2,\ldots,I}
 #' and times \eqn{j=1,2,\ldots,J}. If no count data is available at
 #' site and time \eqn{(i,j)}, a value \eqn{\mu_{ij}} will be imputed.
@@ -228,12 +228,14 @@ trim <- function(object, ...) {
 #'   \item A value >1 uses Tukey's Fence.
 #'   \item A value of 1.0 (which is the default) results in unconstrained overdispersion.
 #'   }
-#'   See vigenette `Taming overdispersion' for more information.}
+#'   See vignette `Taming overdispersion' for more information.}
 #' \item{\code{conv_crit}}{Convergence criterion.
-#'   Used within the iterative emodel estimation algorithm.
+#'   Used within the iterative model estimation algorithm.
 #'   The default value is \code{1e-5}.).
 #'   May be set to higher values in case models don't converge.}
 #' \item{\code{max_iter}}{Number of iterations. Default value is \code{200}. May be set to higher values in case models don't converge.}
+#' \item{\code{alpha_method}}{Choose between a more precise (method 1) or a more robust (method 2) method to estimate site parameters alpha.
+#' The default is the the more precise method; but consider setting it to the more robust method 2 if method results in warnings.}
 #' \item{\code{premove}}{Probability of removal of changepoints (default value: 0.2). Parameter used in stepwise refinement of models. See the vignette 'Models and statistical methods in rtrim'.}
 #' \item{\code{penter}}{Probability of re-entering of changepoints (default value: 0.15). Similar use as \code{premove}.}
 #' }
@@ -331,7 +333,7 @@ trim.formula <- function(object, data=NULL, weights=NULL, ...)
   if (is.null(data)) stop("no data given")
   if (!inherits(data,"data.frame")) stop("argument 'data' should be a data frame")
   if (!is.null(weights)) {
-    if (class(weights)!="character") stop("argument 'weights' should be character")
+    if (!is.character(weights)) stop("argument 'weights' should be character")
     if (!(weights %in% names(data))) stop("weights column not found in data frame")
   }
 

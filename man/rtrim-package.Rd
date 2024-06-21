@@ -2,6 +2,7 @@
 % Please edit documentation in R/rtrim-pkg.R
 \docType{package}
 \name{rtrim-package}
+\alias{rtrim}
 \alias{rtrim-package}
 \title{Trend and Indices for Monitoring Data}
 \description{
@@ -22,6 +23,7 @@ For everybody:
 \itemize{
 \item\href{../doc/Skylark_example.html}{rtrim by example}
 \item\href{../doc/rtrim_2_extensions.html}{rtrim 2 extensions}
+\item\href{../doc/FAQ.html}{Frequently Asked Questions}
 }
 
 For users of the original Windows TRIM software:
@@ -39,3 +41,26 @@ Enjoy!
 The rtrim team of Statistics Netherlands
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/SNStatComp/rtrim}
+  \item Report bugs at \url{https://github.com/SNStatComp/rtrim/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Patrick Bogaart \email{rtrim@cbs.nl} (\href{https://orcid.org/0000-0002-8612-1289}{ORCID})
+
+Authors:
+\itemize{
+  \item Mark van der Loo
+  \item Jeroen Pannekoek
+}
+
+Other contributors:
+\itemize{
+  \item Statistics Netherlands [copyright holder]
+}
+
+}

@@ -111,7 +111,7 @@ Other modelspec:
 \code{\link{check_observations}()},
 \code{\link{read_tdf}()},
 \code{\link{set_trim_verbose}()},
-\code{\link{trimcommand}()},
-\code{\link{trim}()}
+\code{\link{trim}()},
+\code{\link{trimcommand}()}
 }
 \concept{modelspec}

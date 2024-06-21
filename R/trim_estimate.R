@@ -50,6 +50,7 @@ trim_estimate <- function(count, site, year, month, weights, covars
 
   # Handle "auto" changepoints
   if (model==2 && is.character(changepoints)) {
+    changepoints <- tolower(changepoints) # Allow changepoints="All"
     if (changepoints %in% c("all","auto")) {
       if (changepoints == "auto") stepwise=TRUE
       J <- length(unique(year))
@@ -62,9 +63,10 @@ trim_estimate <- function(count, site, year, month, weights, covars
     if (length(changepoints)<2) stop("Stepwise refinement requires >1 changepoints.", call.=FALSE)
   }
 
-  if (isTRUE(serialcor) && !is.null(month)) {
-    stop("serialcor=TRUE not allowed when using monthly data", call.=FALSE)
-  }
+  # Now allowed
+  #if (isTRUE(serialcor) && !is.null(month)) {
+  #  stop("serialcor=TRUE not allowed when using monthly data", call.=FALSE)
+  #}
 
   t1 <- Sys.time()
   if (isTRUE(stepwise)) {

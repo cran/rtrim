@@ -7,9 +7,9 @@
 \method{summary}{trimbatch}(object, ...)
 }
 \arguments{
-\item{...}{options (ignored)}
+\item{object}{a trimbatch object}
 
-\item{x}{an object}
+\item{...}{options (ignored)}
 }
 \description{
 summarize a trimbatch object

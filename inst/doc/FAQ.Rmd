@@ -1,0 +1,177 @@
+---
+title: "rtrim Frequently Asked Questions"
+author: "Marnix de Zeeuw and the rtrim team"
+date: "27 november 2020"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Frequently Asked Questions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Preparing data and running rtrim
+
+## 1. Are there any requirements to the data?
+Yes, each site has to contain at least one positive count (value > 0). Sites without positive counts will be accepted by the software, but will also be automatically removed from the dataset prior to analysis. For time-effect models (model types 2 and 3), each year has to contain at least one positive count. For time-effect models with covariates, each covariate category has to contain at least one positive count for each year. The last two requirements are relaxed for linear trend models: positive counts are only needed for the years selected as change points.
+
+## 2. Is there any lower limit in the number of sites to be meaningful?
+No, as long as the monitoring scheme is representative for the area for which indices are being developed. But be careful in using data with a few sites only. The standard errors might be underestimated as models easily fit very good.
+
+## 3. Is there any lower limit in the number of sites to be meaningful?
+No, as long as the monitoring scheme is representativex for the area for which indices are being developed. But be careful in using data with a few sites only. The standard errors might be underestimated as models easily fit very good.  
+
+## 4. Is it allowed to use TRIM for species that were counted completely? 
+This may be the case for some rare species for which e.g. all breeding pairs are known for each year. Such data may still be treated with TRIM. The input data file needed for TRIM contains only one site with the total counts per year. TRIM then assumes the total counts per year being Poisson distributed and calculates standard errors for time totals being the square root of the counts (the same assumption is made when one applies a $\chi^2$  test on total counts per year).
+
+## 5. If the sites differ in area, is it necessary to convert the counts into densities?
+No. Differences between sites are taken into account in the site effect in the model. But note that sites with a large area contribute more to the indices than small sites if the number of individuals is larger.
+
+## 6. If a new site enters the scheme many years after the start of the scheme, does it mean that all earlier years for that site are missing values for TRIM?
+It depends. If the new site had the same characteristics in the past as during the observed years, such that application of the fitted model would make sense, one may fill in the missing years with NA values. However, in other cases this may not be the case. For example, when a site is agricultural during the ‘missing’ years, and a nature restoration site during the later observed years. In this example, the model may probably not be valid to impute the missing years on this site, and significant errors may be introduced when one does. In this case, it is advised to use a manual expert-knowledge imputation for this specific site and period, e.g. a constant value of 0.
+
+
+# Choosing a model in trim
+
+## 7. What is the standard approach to compute indices?
+Use the time effects model (model 3) with serial correlation and overdispersion switched on. This estimates yearly parameters (in case the time points are years) and produces yearly indices.
+
+
+## 8. What is the use of the linear trend model?
+Choose the linear model (model 2) if the time effects model (model 3) is not possible due to model estimation problems (see next FAQ's about error messages). Such problems are usually due to scarce data in one or more years. If a time effects model is not possible, then try to run a linear model with all change points selected, except the one or few years that have caused the difficulty. The results will then approximate the time effects model. If all years are selected as change points, the linear trend model is equivalent to the time effects model. It is important to understand that a linear trend model also produces indices for each year, but not based on yearly parameters as in the time effects model. Instead, the linear trend uses the trend between change points to compute the indices.
+A linear model with change points may also be useful to test trends before and after particular change points. Options in TRIM are (1) to test trends before and after a prior selected change points or (2) to let TRIM search for the substantial change points by using a stepwise procedure. But be careful in using a linear trend model without any change point selected (the default value)! This TRIM-model assumes a straight-line relationship between (the log of) counts and years over the whole period studied, which is often unrealistic. As a result, the imputations will often be of poor quality.
+
+
+## 9. What is the use of the “no time effects model” (model 1)?
+It is of no use, except for model selection: it is meant to compare the fit with other models. This model produces indices that are all equal to the base year.
+
+
+## 10. What is the meaning of the stepwise procedure to select change points?
+The stepwise procedure implies that one is fitting a model based on important change points only rather than on all time effects, as in the time effects model.
+
+## 11. What do error messages mean as “Error: Found zero or less counts for year 4”?
+The time effects model (model 3) requires that positive count data are available for each year (see questions 1-3 on data requirements). TRIM prompts this error if the model cannot be estimated for this reason. The same error may arise for a linear trend model with a change point selected at time point 4. When the data are missing or sparse for the fourth year, one should try a linear trend model with all change points selected except the fourth year.
+
+## 12. What is the meaning of the Wald test for significance of deviations from linear trend?
+If this test is significant, it means that the time effects model is a better choice than the linear trend model.
+
+## 13. Why are the default p-values in the stepwise selection 0.2 and 0.15 instead of 0.05?  
+These p-values are used in the process of selection of change points and are conventional values in stepwise procedures. In the end, the significance of changes are tested against the 0.05 level.
+
+## 14. By adding a new year to the data, the indices in earlier years change. Is that correct?
+Yes, inclusion of the data of a new year may affect the model estimations for all years of the time series. Generally, the indices in earlier years will hardly change, although sometimes they do change considerably. But one should also take note of the confidence intervals of the indices:  the new index values usually remain within the confidence intervals of the indices of the earlier assessment.
+
+## 15. What is a covariate? 
+A covariate describes a property of the site, for example habitat type with categories woodland and farmland. Incorporating a covariate in the model implies that missing counts are estimated (imputed) for each covariate category separately. Thus, a missing count in a woodland site is estimated from the changes in the other woodland sites only and a missing count in a farmland site is derived from the changes in other farmland sites only. When different trends per habitat are to be expected, this may lead to an improvement of the imputations and of the fit of the model. Both the linear trend model and the time effect model can be extended by covariates.
+
+## 16. What are the advantages of incorporating covariates in the model?
+Advantages of using a covariate are (1) a model with higher goodness-of-fit, with a higher quality of the imputations and usually lower standard errors of the indices and (2) TRIM tests whether the indices differ between covariate categories; this is often interesting to know. When you use a covariate in the model, TRIM calculates separate indices for each category, as well as an overall index based on the sum of the counts of all sites per year.
+
+## 17. Why do the weight factors have no effect on the indices?
+One does not only have specify the name of the column which represents the weights in the R-object containing the data, but it is also required to include a covariate in the TRIM model. Else weight factors are part of the site effects only, without influencing all indices. If one wants to weight sites in order to adjust for e.g. oversampling of a particular habitat type, one has (1) to construct the proper weighting factors per habitat type and include these factors in the R-object containing the data, (2) to incorporate habitat type as covariate in the R-object, (3) to specify the name of the column which represents the weights in the R-object and (4) to include a covariate in the model.
+
+## 18. How to find the indices per covariate category in the output objects?
+Indices for covariates can be computed by setting the covars flag: index(z, covars = TRUE). See '?index' in R.
+
+## 19. Is it possible to name the categories within a covariate?
+Yes, one can name the covariate itself in TRIM, e.g. habitat, and the categories as dunes and heath. There is no need to number categories.
+
+
+# Dealing with model fit
+
+## 20. How can you judge if the model fits?
+The fit of the model is tested by two tests: the Chi-square test and the Likelihood Ratio or Deviance test (see output of the summary()). Usually, the results of these tests are almost similar. If the p-value of (one of) these tests is below 0.05, the model is rejected.
+
+## 21. What if the model does not fit?
+In case the model is rejected, try to find a better model by incorporating covariates that describe the differences in change between sites adequately. You may also compare models using Akaike's Information Criterion (AIC): a lower AIC value implies a better fit (see manual page 15). But what if a better model cannot be found? Please read the following questions.
+
+## 22. Is lack-of-fit of the model relevant in case there are few missing counts?
+Hardly, although it might be worth trying to find a better model; the reward may be indices with smaller standard errors.
+
+## 23. Which proportion of missing values in the data is allowed? 
+It is frequently recommended not using data with more than 50% missing counts, and sometimes even not more than 20%. But a rule of thumb on the proportion of missing counts tolerated is hard to give, because this depends on the fit of the statistical model applied. The more missing counts are present in the data, the more one relies on the statistical model to estimate (impute) missing counts. If the model fits, the imputed values are expected to be close to the observed values, so the higher the proportion of missing values is allowed to be. TRIM allows the user to fit different models in order to find a proper model, with better indices and often smaller standard errors as a result. 
+
+Some TRIM users have suggested deleting sites with many missing values in order to decrease the overall percentage of missing values in the data. That is a misconception; don't do that. Deleting sites with many missing values leads to results based on less information and thus are less representative. Second, when to speak of ‘many’ and when not? That is a subjective choice.
+
+## 24. Are indices reliable even if the model does not fit?
+Generally, yes. In case of lack-of-fit, the quality of the imputations and the indices may be limited. But generally a limited quality of the indices is expressed in bigger standard errors of the indices. That is because TRIM converts any lack-of-fit into higher standard errors (provided the overdispersion is set in TRIM). Thus, the indices are generally reliable, but for a proper interpretation of the results, also take into account the standard errors of the indices. In addition, the overall slope and the Wald tests remain reliable, even if the model does not fit.
+
+## 25. What is overdispersion and what is its impact on the indices?
+TRIM assumes the count data to be Poisson distributed. Overdispersion indicates the degree of deviation of Poisson distribution, and influences the standard errors of the indices and other parameters, not the indices itself. A high overdispersion may result from a lack-of-fit of the model which implies that better models might reduce overdispersion. But a high overdispersion could be also be a characteristic of the species studied, such as appearing in flocks. Of course, such an overdispersion cannot be reduced by searching for better models.
+
+## 26. What if the data are not Poisson distributed?
+That does not have to be a problem. Deviations from Poisson distribution can be taken into account by including overdispersion in the TRIM models. The best strategy is to always incorporate overdispersion in the estimation procedure; else the standard errors might be seriously underestimated. The only exception to switch off overdispersion may be in case of a total census.
+
+## 27. What is the impact of serial correlation on the indices?
+Serial correlation describes the dependence of counts of successive time-points (years) and can be either positive or negative. Serial correlation has a small effect on the indices, except when there are very few data. Taking into account serial correlation frequently produces larger standard errors. Incorporate it into the model (unless the model cannot be estimated then), otherwise the standard errors are expected to be underestimated. 
+
+## 28. How should one assess the best fitting model in case of overdispersion and/or serial correlation? 
+Unfortunately, the Goodness-of-fit tests and AIC are not valid if the counts are not independent Poisson observations. This hampers the evaluation of the fit of the model in case of substantial overdispersion (say > 3) and serial correlation (say > 0.4). In such cases, one has to rely on the Wald tests to find the best model. 
+
+
+# About loglinear regression
+
+## 29. Does one need to transform the data before the analysis? 
+The ordinary statistical analyses, like linear regression, assume data to be normally distributed. To meet that assumption, log transformation may be required. To avoid taking the log of zero, one needs to add a constant, e.g. 1, to all values. In wildlife monitoring data we may have many zero counts per species, especially for rare species that do not occur each year at a particular site. Unfortunately, for data with many zero values, log transformation is not sufficient to meet the assumption of normality and the results may even depend on the magnitude of the constant that is added. 
+
+The GLM-models (McCullagh & Nelder, Generalized Linear Models; Chapman & Hall 1989) offer a better alternative for the ordinary approach and these models have become a standard approach to analyze count data. In GLM-models, the normality assumption is replaced by the assumption of a distribution of the user's choice, e.g. Poisson or multinomial. To apply these models transformation of raw data is no longer required (see the next question). See also Ter Braak et al. (1994) for some more theoretical considerations.
+
+C.J.F. Ter Braak, A.J. van Strien, R. Meijer & T.J. Verstrael, 1994. Analysis of monitoring data with many missing values: which method? In: E.J.M. Hagemeijer & T.J. Verstrael (eds.), 1994. Bird Numbers 1992. Distribution, monitoring and ecological aspects. Proceedings of the 12th International Conference of IBCC and EOAC, Noordwijkerhout, The Netherlands. Statistics Netherlands, Voorburg/Heerlen & SOVON, Beek-Ubbergen, pp. 663-673.
+
+## 30. What is the explanation of the term loglinear regression?
+Monitoring data may be viewed as frequencies in contingency tables, here site by year tables. The GLM-models that describe those contingency tables are called loglinear models. A linear model is not just a model that describes a straight line through the data. It is much broader: a 
+linear model is each linear combination of components. Non-linear components may often be linearized by transformation. The log in the name of loglinear models is because the logarithm enters the contingency table model naturally. If one derives the expected frequencies in the cells 
+of the tables from the margin totals (similar as when applying a $\chi^2$ test), the model would be:   
+ 
+$$\text{Expected value in a cell} = \text{year effect} \times \text{site effect}$$
+This is converted into a linear model by log transformation:
+
+$$ \log(\text{expected value}) = \log(\text{year effect}) + \log (\text{site effect})$$
+This is a simple loglinear model, and different from the ordinary linear regression on log transformed values. A loglinear model is about the log of the *expected* value rather than about the count itself. The expected value will rarely be zero; this only happens if a species is found at no sites at all in a particular year. No transformation of data is required; the log is incorporated implicitly in the model. It is important to understand that indices computed by TRIM are based on the sum of the counts of all sites in a year and not on the sum of the logarithm of these counts (as would be the case in ordinary linear regression on log transformed counts).
+
+## 31. What is the explanation of the term Poisson regression? 
+The Poisson distribution is the basic distribution for data in the form of counts, taking discrete values $0, 1, 2,\ldots$ Think of applying a $\chi^2$ test to a contingency table; this test assumes the count data to be Poisson distributed. Therefore, loglinear regression for contingency tables with frequencies is also called Poisson regression. One way of viewing TRIM is to consider it as an advanced $\chi^2$ test applied to time series of counts.
+
+## 32. Are missing values imputed before the model is estimated?   
+No, the idea is to estimate a model using the observed counts and then to use this model to predict (impute) the missing counts. Indices are then calculated on the basis of a complete dataset with the predicted counts replacing the missing counts. 
+
+
+# Understanding indices and standard errors
+
+## 33. TRIM generates model indices as well as imputed indices. Which are to be preferred? 
+Model-based indices are calculated from the summation of model predictions of all sites i.e. the model-based time totals. Model predictions per site are based on the statistical model. Imputed values per site are observed values, plus, for missing counts, model predictions. Imputed indices are calculated from the imputed time totals. Often, model-based indices and imputed indices hardly differ, and standard errors of imputed indices are expected to be close to the standard errors of model indices (see also the section in the TRIM manual on the equality of model-based and imputed indices). But model-based and imputed indices sometimes differ. In favor of the use of model-based indices is that the indices might be somewhat more stable than imputed counts, especially if the model fits reasonably. In favor of imputed indices is that imputed indices stick closer to the counts and may show a more realistic course in time, especially for linear trend models. We recommend using imputed indices.
+
+## 34. TRIM generates additive and multiplicative parameters. Which are to be preferred? 
+These parameters are different descriptions of the same estimates: the additive parameter is the natural logarithm of the multiplicative parameter. So, it does not matter which one to use, although the multiplicative parameters are easier to understand. The multiplicative trend reflects the changes in terms of average percentage change per year. If this trend is equal to 1, then there is no trend. If the trend is e.g. 1.08, then there is an increase of 8% per year. This means: in year 2, the index value will be 1.08, in year 3 1.08 times 1.08 etc. If the trend would be e.g. 0.93, then there is a decrease of 7% per year.
+
+## 35. How to interpret the standard errors of indices and slopes?
+The standard errors of indices are useful to see whether the index in a particular year differs from the situation in the base year. The indices estimated by TRIM are expected to be normally distributed. Calculate the 95% confidence interval of the index of a particular year by adding 1.96 times its standard error to get the upper limit of the confidence interval. Subtracting this value produces the lower limit. If the confidence interval covers 1, the index is not different from the base year. Else there is a significant difference ($p<0.05$). Take for example the index of year 5 to be 0.91 with a standard error of 0.02. The 95% confidence interval then ranges from 0.87 and 0.95, and the index is significantly lower than the base year. In this way, all indices can be tested against the base year. The same interpretation is valid for the standard errors of the trend slopes. If one would take 2.58 times the standard error instead of 1.96, one gets the 99% confidence interval, associated with the p-value 0.01.
+
+## 36. Is it possible to test the significance of change between two years?
+This is only possible if one of these years is chosen as the base year. By definition, the index of the base year is 1 and its standard errors are zero. If the confidence interval of the other year covers 1, the index is not different from the base year.
+
+## 37 Which year should be chosen as the base time year?
+Usually the first year of the time series is chosen as the base year in order to test the changes against the base year. In case the species is not present in the first year, another year should be chosen, e.g. the last year. Also when the first year has sparse data, it may be better to use another year as base year. By definition the standard errors of the index of the base year are zero and all errors associated with 
+the base year index are transferred to the standard errors of the indices of the other years. In case of few data in the base year, the standard errors of all indices are expected to be big. (It is even allowed to search for the base year that leads to the smallest standard errors of the indices).
+
+## 38 Why has no bootstrapping being applied to assess standard errors of indices?
+TRIM uses analytical methods to calculate standard errors. Bootstrapping could be an alternative to generate standard errors or confidence intervals. We do not expect different results using bootstrapping. But bootstrapping consumes more computer time for large datasets and it is difficult to apply in case of elaborate models with covariates.
+
+# Understanding overall trend slope
+
+## 39. What is the use of the overall trend? 
+In addition to yearly indices, it is interesting to know the trend over the whole study period. One option is using the linear trend model in TRIM without any change points. But this model is questionable because it has poor quality imputations (see FAQ about the use of the linear trend model in TRIM). Therefore, we have developed an estimate of the trend slope for time effects models and linear trend model with change points. This trend slope is the slope of the regression line through the logarithm of the indices. The computation of this slope takes into account the variances and covariances of the indices.
+
+## 40. Why are the standard errors of overall slopes so small? 
+The overall slopes of TRIM usually have smaller standard errors as compared to ordinary linear regression applied to the indices. As a result, trends calculated by TRIM may be significant, whereas those computed by ordinary linear regression are not. This is due to a conceptual difference. In TRIM the overall trend error only depends on the inaccuracy of the yearly indices, without taking into account the fit of the regression line through the indices. That is because we regard the slope as a descriptive parameter that summarizes the changes reflected by the yearly indices. In ordinary linear regression the errors are bigger, because the distances of indices from the regression line are also part of the error.
+
+## 41. Which overall slope should one use?  
+TRIM calculates two different trends: (1) the slope of the regression line based upon model indices and (2) the slope of the regression line based upon imputed indices. We recommend using the overall trend estimate for imputed indices (see FAQ about model indices versus imputed indices). Both regression lines are straight-line relationships between indices and years, with intercept. No estimate of the intercept itself is given, because the intercept differs per site.
+
+## 42. Is it possible to compute overall slopes per covariate category?
+No, because we have not incorporated this feature in TRIM. The only way to compute overall slopes per covariate category is to run TRIM separately for each covariate category.
+
+## 43. How to interpret the overall trend?
+The overall trend can be interpreted in terms of significant decrease, stable population numbers etc. We have incorporated a trend classification in TRIM, see ?overall.
+
+## 44: Why are at least three time-points required to compute a piecewise overall trend
+The (piecewise) overall trends are computed by linear regression. The uncertainty of the model parameters involves a Student's $t$-distribution with $n-2$ degrees of freedom, hence the need for at least three time points.

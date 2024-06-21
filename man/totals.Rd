@@ -4,23 +4,33 @@
 \alias{totals}
 \title{Extract time-totals from TRIM output}
 \usage{
-totals(x, which = c("imputed", "fitted", "both"), obs = FALSE, level = NULL)
+totals(
+  x,
+  which = c("imputed", "fitted", "both"),
+  obs = FALSE,
+  level = NULL,
+  long = FALSE
+)
 }
 \arguments{
 \item{x}{TRIM output structure (i.e., output of a call to \code{trim})}
 
-\item{which}{select what totals to compute (see \code{Details} section).}
+\item{which}{(character) Select what totals to compute (see \code{Details} section).}
 
-\item{obs}{Flag to include total observations (or not).}
+\item{obs}{(logical) Flag to include total observations (or not).}
 
-\item{level}{the confidence level required.
-If NULL, no confidence inetrvals are calculated.}
+\item{level}{(numeric) The confidence level required. If NULL, no confidence intervals are calculated.}
+
+\item{long}{(logical) Flag to return a tidy long table}
 }
 \value{
 A \code{data.frame} with subclass \code{trim.totals}
  (for pretty-printing). The columns are \code{time}, \code{fitted}
  and \code{se_fit} (for standard error), and/or \code{imputed}
- and \code{se_imp}, depending on the selection.
+ and \code{se_imp}, depending on the selection.\cr
+ In case \code{long=TRUE} a long table is returned, and a different naming convention is used,
+ e.g., imputed/fitted info is in column \code{series},
+ and standard error are always in column \code{SE}
 }
 \description{
 Extract time-totals from TRIM output
@@ -58,9 +68,11 @@ Other analyses:
 \code{\link{overdispersion}()},
 \code{\link{plot.trim.index}()},
 \code{\link{plot.trim.overall}()},
+\code{\link{plot.trim.smooth}()},
 \code{\link{results}()},
 \code{\link{serial_correlation}()},
 \code{\link{summary.trim}()},
+\code{\link{trendlines}()},
 \code{\link{trim}()},
 \code{\link{vcov.trim}()},
 \code{\link{wald}()}

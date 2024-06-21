@@ -75,7 +75,7 @@ Other modelspec:
 \code{\link{read_tcf}()},
 \code{\link{read_tdf}()},
 \code{\link{set_trim_verbose}()},
-\code{\link{trimcommand}()},
-\code{\link{trim}()}
+\code{\link{trim}()},
+\code{\link{trimcommand}()}
 }
 \concept{modelspec}

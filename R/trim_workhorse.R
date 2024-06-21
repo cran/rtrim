@@ -14,8 +14,8 @@
 #' @param constrain_overdisp control constraining overdispersion
 #' @param conv_crit convergence criterion.
 #' @param max_iter maximum number of iterations allowed.
-#' @param max_beta maximum value for beta parameters
-#' @return a list of class \code{trim}, that contains all output, statistiscs, etc.
+#' @param alpha_method choose between a more precise (1) or robust (2) method to estimate site parameters alpha.
+#' @return a list of class \code{trim}, that contains all output, statistics, etc.
 #'   Usually this information is retrieved by a set of postprocessing functions
 #'
 #' @keywords internal
@@ -23,11 +23,12 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
                            model, changepoints, overdisp, serialcor, autodelete, stepwise,
                            covin = list(),
                            constrain_overdisp=1.0, conv_crit=1e-5, max_iter=200,
+                           alpha_method=1,
                            debug=FALSE)
 {
   # if (debug) browser()
 
-  alpha_method <- 1     # Choose between 2 methods to compute alpha (1 is recommended)
+  #alpha_method <- 1     # Choose between 2 methods to compute alpha (1 is recommended)
   graph_debug <- FALSE  # enable graphical display of the model convergence
   compatible <- FALSE   # Strict TRIM compatibility (i.e. move to GEE after 3 ML iterations)
 
@@ -175,9 +176,9 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
         stop(sprintf('NA values not allowed for covariate "%s".', names(covars)[i]), call.=FALSE)
       }
       # test for covariant types: integer/string/factor are allowd; all will be converted to factor
-      if (class(covars[[i]])=="integer") {
+      if (inherits(covars[[i]], "integer")) {
         covars[[i]] <- as.factor(covars[[i]])
-      } else if (class(covars[[i]])=="character") {
+      } else if (inherits(covars[[i]], "character")) {
         covars[[i]] <- as.factor(covars[[i]])
       }
       if (!"factor" %in% class(covars[[i]])) {
@@ -357,6 +358,29 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       cv <- icovars[[i]]
       m <- matrix(NA, nsite, nyear)
       m[idx] <- cv
+      #---- expt code for check & fill covars - 2022-04-04: works OK!
+      for (s in 1:nsite) {
+        # 1. get unique covars for this site
+        cvs <- m[s, ]
+        fcvs <- cvs[is.finite(cvs)] # f=finite
+        ucvs <- unique(fcvs)        # u=unique
+        # Check
+        if (length(ucvs)>1) {
+          msg <- sprintf("Multiple covariate values for site %s", as.character(site_id[s]))
+          stop(msg)
+        }
+        if (length(ucvs)<1) {
+          msg <- sprintf("No covariate values for site %s", as.character(site_id[s]))
+          stop(msg)
+        }
+        # 3. Fix
+        if (any(is.na(cvs))) {
+          na_idx <- is.na(cvs) # Position of NA's
+          cvs[na_idx] <- ucvs  # Fill
+          m[s, ] <- cvs        # Write back in matrix
+        }
+      }
+      #---- end
       # not sure why the following line was included; NA's are allowed (mirroring NA's in f)
       # if (any(is.na(m))) stop(sprintf('(implicit) NA values in covariate "%s".', names(covars)[i]), call.=FALSE)
       cvmat[[i]] <- m
@@ -446,6 +470,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     stopifnot(all(diff(changepoints) > 0)) # changepoints must be in incraesing order
   }
 
+  # Setup B ----
+
   # We make use of the generic model structure
   # $$ \log\mu = A\alpha + B\beta $$
   # where design matrices $A$ and $B$ both have $IJ$ rows.
@@ -478,7 +504,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     B <- B[ ,-1, drop=FALSE]  # ...and remove the first column to account for $gamma_1\equiv 0$
   } else stop("Can't happen.")
 
-  # When using months...
+  # When using months, we have to add additional blocks of B ,
+  # approx JxJ -> (J*M)x(J+M)
   if (use.months) {
     # ...we have to paste together M copies of B
     B <- do.call("rbind", replicate(M, B, simplify=FALSE))
@@ -576,7 +603,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
   # Variable $\mu$ holds the estimated counts.
   if (use.months) mu <- array(0, dim=c(I,J,M))
-  else            mu <- matrix(0, nsite, nyear)
+  else            mu <- array(0, dim=c(I,J))   # same as matrix(0, nsite, nyear)
 
   # Setup error handling
   err.out <- NULL
@@ -598,9 +625,14 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # with $V$ a covariance matrix (see Section~\ref{covariance}).
 
   update_alpha <- function(method=c("ML","GEE")) {
-    for (i in 1:nsite) {
-      obs <- obsi[[i]] # observed[i, ]
-      if (alpha_method==1) {
+    alpha1 <- numeric(nsite) # new alpha according to method 1
+    ok1 <- TRUE # fid method 1 succeed?
+    alpha2 <- numeric(nsite) # new alpha according to method 2
+
+    # first try method 1
+    if (alpha_method==1) {
+      for (i in 1:nsite) {
+        obs <- obsi[[i]] # observed[i, ]
         # get (observed) counts for this site
         f_i <- if (use.months) f[i,,] else f[i,] # Data for this site
         f_i <- as.vector(f_i)                    # Matrix->vector representation
@@ -617,27 +649,116 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
         } else if (method=="GEE") { # Use covariance
           z_t <- mu_i %*% V_inv[[i]] # define correlation weights
         } else stop("Can't happen")
+
         if (z_t %*% f_i > 0) { # Application of method 1 is possible
-          alpha[i] <<- log(z_t %*% f_i) - log(z_t %*% exp(B_i %*% beta - log(wt_i)))
-          if (!is.finite(alpha[i])) stop("non-finite alpha problem 1a")
-        } else { # Fall back to method 2
-          sumf <- sum(f_i)
-          sumu <- sum(mu_i)
-          dalpha <- if (sumf/sumu > 1e-7) log(sumf/sumu) else 0.0
-          alpha[i] <<- alpha[i] + dalpha;
-          if (!is.finite(alpha[i])) stop("non-finite alpha problem 1b")
+          tmp1 <- z_t %*% f_i
+          tmp2 <- z_t %*% exp(B_i %*% beta - log(wt_i))
+          if (tmp1>0 & tmp2>0) { # Indeed
+            alpha1[i] <- log(tmp1) - log(tmp2)
+          } else {
+            msg <- sprintf("Problem updating alpha for site #%d (%s); consider setting alpha_method=2", i, site_id[i])
+            warning(msg)
+            ok1 <- FALSE
+          }
+        } else {
+          msg <- sprintf("Problem updating alpha for site #%d (%s); consider setting alpha_method=2", i, site_id[i])
+          warning(msg)
+          ok1 <- FALSE
         }
-        #if (z_t %*% f_i < 0) z_t = matrix(1, 1, nobs[i]) # alternative hack
-      } else { #method 2: classic TRIM
+        if (!ok1) break # do not continue if method 1 is broken
+      }
+    }
+
+    if (alpha_method==2 | !ok1) { # run method 2
+      for (i in 1:nsite) {
+        obs <- obsi[[i]] # observed[i, ]
         f_i <- f[i, obs]
         mu_i <- mu[i, obs]
         sumf <- sum(f_i)
         sumu <- sum(mu_i)
         dalpha <- if (sumf/sumu > 1e-7) log(sumf/sumu) else 0.0
-        alpha[i] <<- alpha[i] + dalpha;
-        if (!is.finite(alpha[i])) stop("non-finite alpha problem 2")
+        alpha2[i] <- alpha[i] + dalpha;
+        if (!is.finite(alpha2[i])) stop("non-finite alpha problem")
       }
     }
+
+    # use either alpha 1 or 2
+    if (alpha_method==1 & ok1) {
+      alpha <<- alpha1
+    } else {
+      alpha <<- alpha2
+    }
+
+    # # original code
+    #
+    # for (i in 1:nsite) {
+    #   obs <- obsi[[i]] # observed[i, ]
+    #   if (alpha_method==1) {
+    #     # get (observed) counts for this site
+    #     f_i <- if (use.months) f[i,,] else f[i,] # Data for this site
+    #     f_i <- as.vector(f_i)                    # Matrix->vector representation
+    #     f_i <- f_i[obs]                          # Observed only
+    #     # idem weights, using more compact but equivalent code
+    #     wt_i <- if (use.months) as.vector(wt[i,,])[obs] else wt[i,obs]
+    #     # idem expected
+    #     mu_i <- if (use.months) as.vector(mu[i,,])[obs] else mu[i,obs]
+    #     # Get design matrix B
+    #     B <- make.B(i)
+    #     B_i <- B[obs, , drop=FALSE]
+    #     if (method=="ML") { # no covariance; $V_i = \diag{mu}$
+    #       z_t <- matrix(1, 1, nobs[i])
+    #     } else if (method=="GEE") { # Use covariance
+    #       z_t <- mu_i %*% V_inv[[i]] # define correlation weights
+    #     } else stop("Can't happen")
+    #
+    #     # # orginal code, which caused problems, see Tomas Telensky's mail
+    #     # if (z_t %*% f_i > 0) { # Application of method 1 is possible
+    #     #   alpha[i] <<- log(z_t %*% f_i) - log(z_t %*% exp(B_i %*% beta - log(wt_i)))
+    #     #   if (!is.finite(alpha[i])) stop("non-finite alpha problem 1a")
+    #     # } else { # Fall back to method 2
+    #     #   sumf <- sum(f_i)
+    #     #   sumu <- sum(mu_i)
+    #     #   dalpha <- if (sumf/sumu > 1e-7) log(sumf/sumu) else 0.0
+    #     #   alpha[i] <<- alpha[i] + dalpha;
+    #     #   if (!is.finite(alpha[i])) stop("non-finite alpha problem 1b")
+    #     # }
+    #
+    #     # alternative approach with automatic fallback to method 2
+    #     a_method <- 2L
+    #     if (z_t %*% f_i > 0) a_method <- 1L # Application of method 1 is possible
+    #     old_alpha <- alpha[i]
+    #
+    #     if (a_method==1L) {
+    #       tmp1 <- z_t %*% f_i
+    #       tmp2 <- z_t %*% exp(B_i %*% beta - log(wt_i))
+    #       if (tmp1<0 | tmp2<0) {
+    #         # fall back of alternative method
+    #         a_method <- 2L
+    #       } else {
+    #         alpha[i] <<- log(tmp1) - log(tmp2)
+    #       }
+    #     }
+    #
+    #     if (a_method==2L) {
+    #       sumf <- sum(f_i)
+    #       sumu <- sum(mu_i)
+    #       dalpha <- if (sumf/sumu > 1e-7) log(sumf/sumu) else 0.0
+    #       alpha[i] <<- old_alpha + dalpha;
+    #     }
+    #
+    #     if (!is.finite(alpha[i])) stop("non-finite alpha problem 1")
+    #
+    #     #if (z_t %*% f_i < 0) z_t = matrix(1, 1, nobs[i]) # alternative hack
+    #   } else { #method 2: classic TRIM
+    #     f_i <- f[i, obs]
+    #     mu_i <- mu[i, obs]
+    #     sumf <- sum(f_i)
+    #     sumu <- sum(mu_i)
+    #     dalpha <- if (sumf/sumu > 1e-7) log(sumf/sumu) else 0.0
+    #     alpha[i] <<- alpha[i] + dalpha;
+    #     if (!is.finite(alpha[i])) stop("non-finite alpha problem 2")
+    #   }
+    # }
     #printf("\n\n** %f ** \n\n", max(abs(alpha1-alpha2)))
     #alpha <<- alpha1 # works better in some cases, i.e. testset 10104_0.tcf
     #if (!all(is.finite(alpha))) alpha <- alpha2
@@ -660,6 +781,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
   check_beta <- function() {
     problem <- ""
+    advice  <- ""
     if (any(!is.finite(beta))) {
       problem <- "non-finite beta value"
       idx <- which(!is.finite(beta))[1]
@@ -674,9 +796,23 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     }
     if (problem != "") {
       if (model==2) {
-        msg <- sprintf("Model can't be estimated due to %s at changepoint #%d (%d)", problem, idx, year_id[idx])
+        # Where does the problem occur?
+        if (idx <= ncp) {  # problem is a changepoints; report also the corresponding year
+          cp <- changepoints[idx]
+          problem_pos <- sprintf("changepoint #%d (%s)", idx, year_id[cp])
+          advice <- "\nYou might consider adjusting the changepoints."
+        } else {           # problem is a month
+          midx <- idx - ncp
+          problem_pos <- sprintf("month #%d (%s)", midx+1, month_id[midx+1])
+          advice <- "\nYou might consider removing this month."
+        }
+        # Report
+        msg <- sprintf("Model can't be estimated due to %s at %s.%s", problem, problem_pos, advice)
       } else if (model==3) {
-        msg <- sprintf("Model can't be estimated due to %s at year #%d (%d)", problem, idx+1, year_id[idx+1])
+         # TODO: report faulty months as well.
+        problem_pos <- sprintf("year #%d (%s)", idx+1, year_id[idx+1])
+        advice <- "\n"
+        msg <- sprintf("Model can't be estimated due to %s at %s.%s", problem, problem_pos, advice)
       } else stop("Unexpected model:", model)
       stop(msg, call.=FALSE)
     }
@@ -763,9 +899,21 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   #   \end{pmatrix}
   # \end{equation}
   # where $\rho$ is the lag-1 autocorrelation.
-  Rg <- diag(1, nyear) # default (no autocorrelation) value
+  if (use.months) Rg <- diag(1, nyear*nmonth)
+  else            Rg <- diag(1, nyear) # default (no autocorrelation) value
+
   update_R <- function() {
-    Rg <<- rho ^ abs(row(diag(nyear)) - col(diag(nyear)))
+    if (use.months) {
+      Rg0 <- rho ^ abs(row(diag(nyear)) - col(diag(nyear)))
+      # place M copies, diagonally in Rg
+      idx <- 1:nyear
+      for (k in 1:nmonth) {
+        Rg[idx,idx] <<- Rg0
+        idx <- idx + length(idx)
+      }
+    } else {
+      Rg <<- rho ^ abs(row(diag(nyear)) - col(diag(nyear)))
+    }
   }
 
   # Lag-1 autocorrelation parameter $\rho$ is estimated as
@@ -781,8 +929,15 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     # First estimate $\rho$
     rho   <-  0.0
     count <-  0
-    for (i in 1:nsite) {
-      for (j in 1:(nyear-1)) {
+    if (use.months) {
+      for (i in 1:nsite) for (j in 1:(nyear-1)) for (m in 1:nmonth) {
+        if (observed[i,j,m] && observed[i,j+1,m]) {
+          rho <- rho + r[i,j,m] * r[i,j+1,m]
+          count <- count+1
+        }
+      }
+    } else {
+      for (i in 1:nsite) for (j in 1:(nyear-1)) {
         if (observed[i,j] && observed[i,j+1]) { # short-circuit AND intended
           rho <- rho + r[i,j] * r[i,j+1]
           count <- count+1
@@ -857,7 +1012,9 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # \begin{equation}
   #   r_{ij} = (f_{ij} - \mu_{ij}) / \sqrt{\mu_{ij}}
   # \end{equation}
-  r <- matrix(0, nsite, nyear)
+  if (use.months) r <- array(0, dim=c(nsite,nyear,nmonth))
+  else            r <- matrix(0, nsite, nyear)
+
   update_r <- function() {
     r[observed] <<- (f[observed]-mu[observed]) / sqrt(mu[observed])
   }
@@ -1539,10 +1696,18 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       if (!is.null(mask)) wmu[!mask] <- 0.0 # Erase 'other' covariate categories also.
       for (i in 1:nsite) {
         if (use.months) {
+          midx <- 1:nyear # to select month block from Rg
           for (m in 1:nmonth) {
             wwmu_im <- wwmu[i, ,m]
-            Vi <- sig2 * diag(wwmu_im)
+            if (serialcor) {
+              srdu = sqrt(diag(wwmu_im))
+              Rgm <- Rg[midx,midx]
+              Vi = sig2 * srdu %*% Rgm %*% srdu
+            } else {
+              Vi <- sig2 * diag(wwmu_im)
+            }
             V <- V + Vi
+            midx <- midx + nyear # next month
           }
         } else {
           wwmu_i <- wwmu[i, ]

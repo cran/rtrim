@@ -220,15 +220,18 @@ coef.trim <- function(object,
 #' Extract time-totals from TRIM output
 #'
 #' @param x TRIM output structure (i.e., output of a call to \code{trim})
-#' @param which select what totals to compute (see \code{Details} section).
-#' @param obs Flag to include total observations (or not).
-#' @param level the confidence level required.
-#'   If NULL, no confidence inetrvals are calculated.
+#' @param which (character) Select what totals to compute (see \code{Details} section).
+#' @param obs (logical) Flag to include total observations (or not).
+#' @param level (numeric) The confidence level required. If NULL, no confidence intervals are calculated.
+#' @param long (logical) Flag to return a tidy long table
 #'
 #' @return A \code{data.frame} with subclass \code{trim.totals}
 #'  (for pretty-printing). The columns are \code{time}, \code{fitted}
 #'  and \code{se_fit} (for standard error), and/or \code{imputed}
-#'  and \code{se_imp}, depending on the selection.
+#'  and \code{se_imp}, depending on the selection.\cr
+#'  In case \code{long=TRUE} a long table is returned, and a different naming convention is used,
+#'  e.g., imputed/fitted info is in column \code{series},
+#'  and standard error are always in column \code{SE}
 #'
 #' @section Details:
 #'
@@ -252,45 +255,99 @@ coef.trim <- function(object,
 #'
 #' totals(z, "both") # mimics classic TRIM
 #'
-totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL) {
+totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL, long=FALSE) {
   stopifnot(class(x)=="trim")
-
-  # Select output columns from the pre-computed time totals
   which <- match.arg(which)
-  totals <- switch(which
-    , fitted  = x$time.totals[c(1,2,3)]
-    , imputed = x$time.totals[c(1,4,5)]
-    , both    = x$time.totals[1:5]
-  )
-  if (obs) totals$observed <- x$time.totals$observed
 
-  # Optionally add a confidence interval
-  if (!is.null(level)) {
-    if (ncol(totals)>4) stop("Confidence intervals can only be computed for either imputed or fitted time totals, but not for both")
-    mul <- ci_multipliers(lambda=totals[[2]], sig2=x$sig2, level=level)
-    totals$lo <- totals[[2]] - totals[[3]] * mul$lo
-    totals$hi <- totals[[2]] + totals[[3]] * mul$hi
+  if (long==FALSE) { # Old version, for backwards compatibility
+    # Select output columns from the pre-computed time totals
+    tt <- switch(which
+                 , fitted  = x$time.totals[c(1,2,3)]
+                 , imputed = x$time.totals[c(1,4,5)]
+                 , both    = x$time.totals[1:5]
+    )
+
+    # Optionally add observations
+    if (obs) tt$observed <- x$time.totals$observed
+
+    # Optionally add a confidence interval
+    if (!is.null(level)) {
+      if (ncol(tt)>4) stop("Confidence intervals can only be computed for either imputed or fitted time totals, but not for both")
+      mul <- ci_multipliers(lambda=tt[[2]], sig2=x$sig2, level=level)
+      tt$lo <- tt[[2]] - tt[[3]] * mul$lo
+      tt$hi <- tt[[2]] + tt[[3]] * mul$hi
+      # BUGFIX:
+      ci <- new_confidence_interval(tt[[2]], tt[[3]], level-level)
+      tt$lo <- ci$lo
+      tt$hi <- ci$hi
+    }
+  } else { # New (rtrim 3) version, using a 'long' format
+    if (which=="fitted") {
+      tt <- data.frame(variable="time_totals",
+                       series="fitted",
+                       year  =x$time.totals$time,
+                       value =x$time.totals$fitted,
+                       SE    =x$time.totals$se_fit)
+    } else if (which=="imputed") {
+      tt <- data.frame(variable="time_totals",
+                       series="imputed",
+                       year  =x$time.totals$time,
+                       value =x$time.totals$imputed,
+                       SE    =x$time.totals$se_imp)
+    } else if (which=="both") {
+      tt1 <-data.frame(variable="time_totals",
+                       series="fitted",
+                       year  =x$time.totals$time,
+                       value =x$time.totals$fitted,
+                       SE    =x$time.totals$se_fit)
+      tt2 <- data.frame(variable="time_totals",
+                        series="imputed",
+                        year  =x$time.totals$time,
+                        value =x$time.totals$imputed,
+                        SE    =x$time.totals$se_imp)
+      tt <- rbind(tt1, tt2)
+    } else {
+      stop("totals(): Invalid value for option 'which':", which)
+    }
+
+    # Optionally add observations
+    if (obs) {
+      tt_obs <- data.frame(series="observed",
+                           year  = x$time.totals$time,
+                           value = x$time.totals$observed,
+                           SE    = NA)
+      tt <- rbind(tt,tt_obs)
+    }
+
+    # Optionally add a confidence interval
+    if (!is.null(level)) {
+      mul <- ci_multipliers(lambda=tt$value, sig2=x$sig2, level=level)
+      tt$lo <- tt$value - tt$SE * mul$lo
+      tt$hi <- tt$value + tt$SE * mul$hi
+    }
   }
 
-  # wrap the time.index field in a list and make it an S3 class
-  # (so that it becomes recognizable as a TRIM time-indices)
-  class(totals) <- c("trim.totals","data.frame")
-  totals
+  # Make recognizable as "time totals"
+  old_class <- class(tt)
+  new_class <- c("trim.totals", old_class)
+  class(tt) <- new_class
+
+  return(tt)
 }
 
 #------------------------------------------------------------------ Export ----
 
-export <- function(x, species, stratum) UseMethod("export")
-
-export.trim.totals <- function(x, species, stratum) {
-  stopifnot(class(x)=="trim.totals")
-
-  # Create extra columns to be put before the actual time totals
-  df1 = data.frame(species=species, stratum=stratum)
-  df2 = x$totals
-  df = cbind(df1, df2)
-  print(df, row.names=FALSE)
-}
+# export <- function(x, species, stratum) UseMethod("export")
+#
+# export.trim.totals <- function(x, species, stratum) {
+#   stopifnot(inherits(x, "trim.totals"))
+#
+#   # Create extra columns to be put before the actual time totals
+#   df1 = data.frame(species=species, stratum=stratum)
+#   df2 = x$totals
+#   df = cbind(df1, df2)
+#   print(df, row.names=FALSE)
+# }
 
 #------------------------------------------------------------------ Plot -----
 
@@ -311,7 +368,7 @@ export.trim.totals <- function(x, species, stratum) {
 #' @param xlab    x-axis label. The default value of "auto" will be changed into "Year" or "Time Point", whichever is more appropriate.
 #' @param ylab    y-axis label.
 #' @param leg.pos legend position, similar as in \code{\link[graphics]{legend}}.
-#' @param band Defines if the uncertainty band will be plotted using standard errors ("se") or confidence intervals ("ci").
+#' @param band    Defines if the uncertainty band will be plotted using standard errors ("se") or confidence intervals ("ci").
 #'
 #' @export
 #'
@@ -333,7 +390,7 @@ export.trim.totals <- function(x, species, stratum) {
 #'
 plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals", leg.pos="topleft", band="se") {
 
-  special <- "time totals" # disinguish between "time totals" and "index" modes
+  special <- "time totals" # distinguish between "time totals" and "index" modes
 
   # 1. Parse ellipsis (...) arguments: collect trim.totals objects and their names
 
@@ -357,7 +414,7 @@ plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals"
         nz <- nz + 1L
         zz[[nz]] <- item
         keep[i] <- FALSE # additional index data sets are removed from the ellipsis argument
-      } else if (class(item)=="character") {
+      } else if (inherits(item, "character")) {
         # todo: check if this arguments immediately follows an index argument
         attr(zz[[nz]], "tag") <- item
         keep[i] <- FALSE
@@ -633,13 +690,27 @@ ci_multipliers <- function(lambda, sig2=NULL, level=0.95)
   if (is.null(sig2)) sig2 <- 1.0
   if (sig2<1) stop("Overdispersion must be >= 1")
   # Quantiles
-  qhi <- qgamma(p=1-(1-level)/2, shape=lambda/sig2, scale=sig2)
-  qlo <- qgamma(p=  (1-level)/2, shape=lambda/sig2, scale=sig2)
+  alpha <- 1-level
+  qhi <- qgamma(p=1-alpha/2, shape=lambda/sig2, scale=sig2)
+  qlo <- qgamma(p=  alpha/2, shape=lambda/sig2, scale=sig2)
   # Standard deviation
   sd <- sqrt(sig2 * lambda)
   # Multipliers
-  data.frame(lomul = (qhi-lambda) / sd,
-             himul = (lambda-qlo) / sd)
+  umul <- (qhi-lambda) / sd
+  lmul <- (lambda-qlo) / sd
+  out <- data.frame(lomul=lmul, himul=umul)
+  out
+}
+
+new_confidence_interval <- function(lambda, se, level=0.95)
+{
+  sig2 <- se^2 / lambda
+  # Quantiles
+  alpha <- 1-level
+  qhi <- qgamma(p=1-alpha/2, shape=lambda/sig2, scale=sig2)
+  qlo <- qgamma(p=  alpha/2, shape=lambda/sig2, scale=sig2)
+  out <- data.frame(lo=qlo, hi=qhi)
+  out
 }
 
 
@@ -670,16 +741,29 @@ confint.trim <- function(object, parm=c("imputed","fitted"), level=0.95, ...) {
   lambda <- tt[[2]] # imputed or fitted time totals
   se     <- tt[[3]] # std.err.
 
-  sig2 <- 1.0
+  # # this used to be: sig2 = 1, which gave err. CI
+  # sig2 <- object$sig2
+  # if (is.null(sig2)) sig2 <- 1.0
+  #
+  # # Lower bound:
+  # qlo <- qgamma(p=(1-level)/2, shape=lambda) # Compute multipliers
+  # lmul <- (lambda-qlo) / sqrt(lambda)
+  # lo <- lambda - se * lmul # Compute CI bounds
+  # # Upper bound
+  # qhi <- qgamma(p=1-(1-level)/2, shape=lambda)
+  # umul <- (qhi-lambda) / sqrt(lambda)
+  # hi <- lambda + se * umul
+  #
+  # # BUGFIX (due to Tomas Telensky who spotted it)
+  # mul <- ci_multipliers(lambda, sig2, level)
+  # lo <- lambda - se * mul$lo
+  # hi <- lambda + se * mul$hi
 
-  # Lower bound:
-  qlo <- qgamma(p=(1-level)/2,   shape=lambda) # Compute multipliers
-  lmul <- (lambda-qlo) / sqrt(lambda)
-  lo <- lambda - se * lmul # Compute CI bounds
-  # Upper bound
-  qhi <- qgamma(p=1-(1-level)/2, shape=lambda)
-  umul <- (qhi-lambda) / sqrt(lambda)
-  hi <- lambda + se * umul
+  # Better
+  ci <- new_confidence_interval(lambda, se, level)
+  lo <- ci$lo
+  hi <- ci$hi
+
   # Combine and label
   CI <- cbind(lo, hi)
   pctlo <- sprintf("%.1f %%", 100 * ((1-level)/2))
@@ -773,18 +857,19 @@ results <- function(z) {
   out
 }
 
-plot.trim.results <- function(z, ...) {
-  sites = levels(z$site)
-  nsite = nlevels(z$site)
+#' @export
+plot.trim.results <- function(x, ...) {
+  sites = levels(x$site)
+  nsite = nlevels(x$site)
   hues = seq(0, 360, length.out = nsite+1)[1:nsite]
   colors = hcl(hues, 100, 65) # C and L Similar to ggplot
   # hues = seq(0, 1, length.out = nsite+1)[1:nsite]
   # colors = hsv(hues, 0.5, 1)
-  xrange = range(z$time)
-  yrange = range(z$observed, z$modelled, na.rm=TRUE)
+  xrange = range(x$time)
+  yrange = range(x$observed, x$modelled, na.rm=TRUE)
   plot(xrange,yrange, type='n', xlab="Time", ylab="Counts")
   for (i in 1: nsite) {
-    df = z[z$site == sites[i], ]
+    df = x[x$site == sites[i], ]
     points(df$time, df$observed, pch=16, col=colors[i])
     lines(df$time, df$modelled, col=colors[i])
   }
