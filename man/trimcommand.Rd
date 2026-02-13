@@ -49,7 +49,7 @@ reading a legacy TRIM command file.
 }
 
 \seealso{
-\href{../doc/Working_with_tcf.html}{Working with TRIM command files and TRIM data files}.
+\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users}.
 
 Other modelspec: 
 \code{\link{check_observations}()},

@@ -28,7 +28,7 @@
 #' For users who would like to have more insight what is going on under the hood:
 #' \itemize{
 #' \item\href{../doc/TRIM_methods_v2.pdf}{Models and statistical methods in rtrim} (PDF),
-#' \item\href{../doc/TRIM_confidence_intervals.html}{rtrim confidence intervals}
+#' \item\href{../doc/rtrim_confidence_intervals.html}{rtrim confidence intervals}
 #' \item\href{../doc/taming_overdispersion.html}{Taming overdispersion}.
 #' }
 #' Enjoy!

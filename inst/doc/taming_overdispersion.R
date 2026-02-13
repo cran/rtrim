@@ -112,7 +112,7 @@ sig2_alt2 <- sum(r2[ok]) / df
 cat(sprintf("Reduced sig2 from %.1f to %.1f\n", sig2_std, sig2_alt2))
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  z <- trim(..., overdisp=TRUE, constrain_overdisp=3, ...)
+# z <- trim(..., overdisp=TRUE, constrain_overdisp=3, ...)
 
 ## -----------------------------------------------------------------------------
 level <- 0.99
@@ -135,7 +135,7 @@ points(sig2_alt3, pch=16, col="red")
 text(25,400, sprintf("Convergence at %.1f", sig2_alt3[niter]))
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  z <- trim(..., overdisp=TRUE, constrain_overdisp=0.99, ...)
+# z <- trim(..., overdisp=TRUE, constrain_overdisp=0.99, ...)
 
 ## -----------------------------------------------------------------------------
 z1 <- trim(count ~ site + (year+month), data=oystercatcher3, model=3,
