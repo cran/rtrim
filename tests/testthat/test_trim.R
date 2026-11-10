@@ -165,7 +165,7 @@ test_that("skylark-2b",{
   tc <- read_tcf("outfiles/skylark-2b.tcf")
   m <- trim(tc)
   to <- read_tof("outfiles/skylark-2b.out")
-  trimtest(m,to,tc)
+  expect_warning(trimtest(m,to,tc), regexp="Wald test.*not yet implemented")
 })
 
 context("TRIM Model 2 [overdisp, ser.cor, covar, stepwise]")
@@ -250,8 +250,6 @@ test_that("skylark-x3",{
 })
 
 
-
-
 context("Calling trim the R-way (smoketests)")
 
 test_that("testing skylark-2a",{
@@ -294,6 +292,7 @@ test_that("invalid model specs",{
 
 })
 
+# keep this commented out (june 6, 2026)
 # test_that("Zero expected count", {
 #   load("testdata/131183.RData")
 #   suppressWarnings(

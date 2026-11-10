@@ -1,7 +1,7 @@
 Package: rtrim
 Title: Trends and Indices for Monitoring Data
-Version: 2.3.1
-Date: 2026-02-13
+Version: 2.4.0
+Date: 2026-11-09
 Authors@R: c(
     person("Patrick","Bogaart",
       email="rtrim@cbs.nl",
@@ -13,8 +13,8 @@ Authors@R: c(
 Description: The TRIM model is widely used for estimating growth and decline of
     animal populations based on (possibly sparsely available) count data. The
     current package is a reimplementation of the original TRIM software developed
-    at Statistics Netherlands by Jeroen Pannekoek. See
-    <https://www.cbs.nl/en-gb/society/nature-and-environment/indices-and-trends%2d%2dtrim%2d%2d>
+    at Statistics Netherlands by Jeroen Pannekoek.
+    See <https://www.cbs.nl/en-gb/society/nature-and-environment/indices-and-trends%2d%2dtrim%2d%2d>
     for more information about TRIM.
 URL: https://github.com/SNStatComp/rtrim
 BugReports: https://github.com/SNStatComp/rtrim/issues
@@ -24,11 +24,11 @@ License: EUPL
 Type: Package
 Imports: methods, utils, stats, graphics, grDevices
 Suggests: testthat, knitr, rmarkdown, R.rsp
-RoxygenNote: 7.3.3
+RoxygenNote: 7.3.2
 Encoding: UTF-8
 VignetteBuilder: knitr, R.rsp
 NeedsCompilation: no
-Packaged: 2026-02-13 15:31:58 UTC; patrick
+Packaged: 2026-11-09 20:45:34 UTC; PBGT
 Author: Patrick Bogaart [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-8612-1289>),
   Mark van der Loo [aut],
@@ -36,4 +36,4 @@ Author: Patrick Bogaart [aut, cre] (ORCID:
   Statistics Netherlands [cph]
 Maintainer: Patrick Bogaart <rtrim@cbs.nl>
 Repository: CRAN
-Date/Publication: 2026-02-13 16:20:08 UTC
+Date/Publication: 2026-11-10 08:40:02 UTC

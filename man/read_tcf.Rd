@@ -105,7 +105,7 @@ If the \code{file} is specified using backslashes to separate directories
 }
 
 \seealso{
-\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users}.
+TRIM command files and TRIM data files in \href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM3 users}.
 
 Other modelspec: 
 \code{\link{check_observations}()},

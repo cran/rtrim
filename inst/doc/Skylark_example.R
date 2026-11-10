@@ -70,7 +70,8 @@ index(z4, which="both", covars=TRUE)
 plot(index(z4,which="fitted",covars=TRUE))
 
 ## -----------------------------------------------------------------------------
-check_observations(skylark2, model=3, covars=c("habitat","deposition"))
+msg <- check_observations(skylark2, model=3, covars=c("habitat","deposition"))
+if (msg!="") print(msg)
 
 ## -----------------------------------------------------------------------------
 z5 <- trim(count ~ site + year + habitat+deposition, data=skylark2, model=2,

@@ -11,7 +11,8 @@
 #' @param changepoints a numerical vector change points (only for Model 2)
 #' @param weights a numerical vector of weights.
 #' @param covin a list of variance-covariance matrices; one per pseudo-site.
-#' @param constrain_overdisp control constraining overdispersion
+#' @param BC enforce backwards compatibility with the Delphi version of TRIM
+#' @param constrain_overdisp control the constraints on  overdispersion
 #' @param conv_crit convergence criterion.
 #' @param max_iter maximum number of iterations allowed.
 #' @param alpha_method choose between a more precise (1) or robust (2) method to estimate site parameters alpha.
@@ -22,12 +23,10 @@
 trim_workhorse <- function(count, site, year, month, weights, covars,
                            model, changepoints, overdisp, serialcor, autodelete, stepwise,
                            covin = list(),
-                           constrain_overdisp=1.0, conv_crit=1e-5, max_iter=200,
-                           alpha_method=1,
+                           BC=FALSE, constrain_overdisp=1.0, conv_crit=1e-5, max_iter=200,
+                           alpha_method=1, min_obs=1L,
                            debug=FALSE)
 {
-  # if (debug) browser()
-
   #alpha_method <- 1     # Choose between 2 methods to compute alpha (1 is recommended)
   graph_debug <- FALSE  # enable graphical display of the model convergence
   compatible <- FALSE   # Strict TRIM compatibility (i.e. move to GEE after 3 ML iterations)
@@ -35,23 +34,9 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
   # These were user options, but are now fixed
   max_sub_step <- 7L
-  max_beta <- 20
+  max_beta <- 50 # was: 20
 
-  # =========================================================== Preparation ====
-
-  # Check the arguments. \verb!count! should be a vector of numerics.
-  stopifnot(class(count) %in% c("integer","numeric"))
-  n = length(count)
-
-
-  # ----------------------------------------------------------- Check sites ----
-
-  # Check length
-  if (length(site) != length(count)) {
-    msg <- sprintf("Number of site ID's (%d) is different than the number of counts (%d)",
-                   length(site), length(count))
-    stop(msg, call.=FALSE)
-  }
+  # ======================================================== 1. Preparation ====
 
   # Convert numerics that are integers in disguise
   num2int <- function(x, tol=1e-7) {
@@ -62,6 +47,23 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     }
     x
   }
+
+  ## --------------------------------------------------------------- Checks ----
+
+  # Check the arguments. \verb!count! should be a vector of numerics.
+  stopifnot(class(count) %in% c("integer","numeric"))
+  n = length(count)
+
+
+  ### --------------------------------------------------------- Check sites ----
+
+  # Check length
+  if (length(site) != length(count)) {
+    msg <- sprintf("Number of site ID's (%d) is different than the number of counts (%d)",
+                   length(site), length(count))
+    stop(msg, call.=FALSE)
+  }
+
   if (inherits(site,"numeric")) site <- num2int(site)
 
   if (inherits(site,"integer")) {
@@ -85,7 +87,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   site_nr <- as.integer(site)         # 1, 2, ..., I
 
 
-  # ----------------------------------------------------------- Check years ----
+  ### --------------------------------------------------------- Check years ----
 
   # Check length
   if (length(year) != length(count)) {
@@ -98,16 +100,18 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # Convert numerics that are integers in disguise
   if (inherits(year, "numeric")) year <- num2int(year)
 
+  NO_CONST_INTERVAL_msg <- "Years don't have a constant interval (if a whole year is missing, consider to add count=NA records to prevent this error)"
+
   if (inherits(year,"integer")) {
     # Integers are allowed iff they have a constant step size
     delta <- unique(diff(sort(unique(year))))
-    if (length(delta)!=1L) stop("Years don't have a constant interval")
+    if (length(delta)!=1L) stop(NO_CONST_INTERVAL_msg)
     year <- ordered(year)
     year_id <- as.integer(levels(year))
   } else  if (inherits(year, "numeric")) {
     # Idem for numerics
     delta <- unique(diff(sort(unique(year))))
-    if (length(delta)!=1L) stop("Years don't have a constant interval")
+    if (length(delta)!=1L) stop(NO_CONST_INTERVAL_msg)
     year <- ordered(year)
     year_id <- as.numeric(levels(year))
   } else {
@@ -118,7 +122,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   J <- nyear <- nlevels(year)
   year_nr <- as.integer(year)
 
-  # ---------------------------------------------------------- Check months ----
+  ### -------------------------------------------------------- Check months ----
 
   if (is.null(month)) {
     use.months <- FALSE
@@ -162,32 +166,75 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     M <- nmonth <- nlevels(month)
   }
 
-  # ---------------------------------------------------------- Check covars ----
+  ### -------------------------------------------------------- Check counts ----
 
-  # \verb!covars! should be a list where each element (if any) is a vector
-  stopifnot(class(covars)=="data.frame")
+  # Could not be done before, because we need info on nr of sites, years and months
+
+  # Check for double data records
+  if (use.months) {
+    check <- tapply(count, list(site_nr, year_nr, month_nr), length)
+    if (max(check, na.rm=TRUE)>1)
+      stop("More than one observation given for at least one site/year/month combination.", call.=FALSE)
+  } else {
+    check <- tapply(count, list(site_nr, year_nr), length)
+    if (max(check, na.rm=TRUE)>1)
+      stop("More than one observation given for at least one site/year combination.", call.=FALSE)
+  }
+
+  # Check for too much data (could not happen?)
+  if (length(count) > I*J*M) {
+    msg <- sprintf("Unexpected error: more count data (%d) than I*J*M (%d)", length(count), I*J*M)
+    stop(msg, call.=FALSE)
+  }
+
+
+  ### ------------------------------------------------------- Check weights ----
+
+  # Weights should be either absent, or aligned with the counts
+  if (is.null(weights)) {
+    use.weights <- FALSE
+  } else {
+    use.weights <- TRUE
+    stopifnot(length(weights)==length(count))
+
+    # where counts are present, weights cannot be NA
+    idx <- is.finite(count)
+    if (any(is.na(weights[idx]))) stop("NA weights found where counts are given.")
+
+    # replace other NA weights by 1 (the default anyway)
+    # 2026-09-14: tests show that the value does not matter.
+    idx <- is.na(weights)
+    weights[idx] <- 1
+  }
+
+  ### -------------------------------------------------------- Check covars ----
+
+  # covars should be a data.frame or similar
+  stopifnot(inherits(covars,"data.frame"))
   ncovar <- length(covars)
   use.covars <- ncovar>0
   if (use.covars) {
     # convert to numerical values (1...nlevel)
-    icovars <- vector("list", ncovar)
+    icovars <- covars # hack: start with a copy; replace columns by integer representations later
     for (i in 1:ncovar) {
+      my_covar <- names(covars)[i] # name of current covariate
+
       if (any(is.na(covars[[i]]))) {
-        stop(sprintf('NA values not allowed for covariate "%s".', names(covars)[i]), call.=FALSE)
+        stop(sprintf('NA values not allowed for covariate "%s".', my_covar), call.=FALSE)
       }
-      # test for covariant types: integer/string/factor are allowd; all will be converted to factor
+      # test for covariant types: integer/string/factor are allowed; all will be converted to factor
       if (inherits(covars[[i]], "integer")) {
         covars[[i]] <- as.factor(covars[[i]])
       } else if (inherits(covars[[i]], "character")) {
         covars[[i]] <- as.factor(covars[[i]])
       }
-      if (!"factor" %in% class(covars[[i]])) {
-        stop(sprintf('Invalid data type for covariate "%s".', names(covars)[i]), call.=FALSE)
+      if (!inherits(covars[[i]], "factor")) {
+        stop(sprintf('Invalid data type for covariate "%s".', my_covar), call.=FALSE)
       }
       icovars[[i]] <- as.integer((covars[[i]]))
     }
 
-    # Also, each covariate $i$ should be a number (ID) ranging $1\ldots nclass_i$
+    # Determine the number of classes of each covariate
     nclass <- numeric(ncovar)
     for (i in 1:ncovar) {
       cv <- icovars[[i]] # The vector of covariate class ID's
@@ -202,41 +249,29 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
   # remove covariates that have only a single class
   while (any(nclass==1)) {
-    idx <-  which(nclass==1)[1]
+    idx <-  match(1, class) # find first index
     warning(sprintf("Removing covariate \"%s\" which has only one class.", names(covars)[idx])
             , call.=FALSE, immediate.=TRUE)
     covars <-  covars[-idx]
     icovars <- icovars[-idx]
     nclass <- nclass[-idx]
-    ncovar <- ncovar-1
+    ncovar <- ncovar - 1L
     if (ncovar==0) {
       warning("No covariates left", call.=FALSE, immediate.=TRUE)
       use.covars <- FALSE
     }
   }
 
-  # ----------------------------------------------------- Check double data ----
-
-  if (use.months) {
-    check <- tapply(count, list(site_nr, year_nr, month_nr), length)
-    if (max(check, na.rm=TRUE)>1)
-      stop("More than one observation given for at least one site/year/month combination.", call.=FALSE)
-  } else {
-    check <- tapply(count, list(site_nr, year_nr), length)
-    if (max(check, na.rm=TRUE)>1)
-      stop("More than one observation given for at least one site/year combination.", call.=FALSE)
-  }
-  if (length(count) > I*J*M) {
-    msg <- sprintf("Unexpected error: more count data (%d) than I*J*M (%d)", length(count), I*J*M)
-    stop(msg, call.=FALSE)
-  }
-
   # ----------------------------------------------------------- Other setup ----
 
-  # \verb!model! should be in the range 1 to 3
+  ## --------------------------------------------------------------- Models ----
+
+  # Model should be in the range 1 to 3
   stopifnot(model %in% 1:3)
 
-  # beta parameters are used only if we have model2+changepoints, or model3
+  ## ----------------------------------------------------------------- beta ----
+
+  # Beta parameters are used only if we have model 2 + changepoints, or model 3
   if (model==1) {
     use.beta <- FALSE
   } else if (model==2) {
@@ -245,18 +280,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     use.beta <- TRUE
   } else stop("Should not happen")
 
-  # Weights should be either absent, or aligned with the counts
-  if (is.null(weights)) {
-    use.weights <- FALSE
-  } else {
-    use.weights <- TRUE
-    stopifnot(length(weights)==length(count))
-  }
-
   # User-specified covariance
   use.covin <- length(covin)>0
-
-
 
   # Check for sufficient data
   # # todo: speedup by using as.integer(month_fctr) etc.
@@ -277,26 +302,34 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # }
   }
 
+  ## -------------------------------------------------------- Data matrices ----
+
+  ### -------------------------------------------------------- Observations ----
+
   # Create observation matrix $f$.
   # Convert the data from a vector representation to a matrix representation.
   # It's OK to have missing site/time combinations; these will automatically
   # translate to NA values.
   if (!use.months) {
-    f <- matrix(NA, nsite, nyear) # ??? check if we should not use NA instead of 0!!!
-    rows <- site_nr # works because site_nr = 1...I
-    cols <- year_nr # idem
+    # Pre-fill the matrix with NA values
+    f <- matrix(NA, nsite, nyear)
+    # To put all counts in the correct cell, make use of our site and year numbers that are 1...I etc
+    rows <- site_nr
+    cols <- year_nr
     idx <- (cols-1)*nsite+rows   # Create column-major linear index from row/column subscripts.
     f[idx] <- count    # ... such that we can paste all data into the right positions
   } else {
-    # Create a layers f, one layer per month
+    # For monthly data, we need a 3D array. Construct it per layer (one for each month)
     f <- array(NA, dim=c(nsite,nyear,nmonth))
     for (m in 1:M) {
+      # Construct the layer
       fm <- matrix(NA, nsite, nyear)
       midx <- month_nr == m # month factor -> 1,2,3,etc
       rows <- site_nr[midx]
       cols <- year_nr[midx]
       idx <- (cols-1)*nsite+rows
       fm[idx] <- count[midx]
+      # and store it.
       f[ , ,m] <- fm
     }
   }
@@ -337,6 +370,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
   # TRIM is not intended for extrapolation. Therefore, issue a warning if the first or last
   # time points do not contain positive observations.
+
   totals <- colSums(f, na.rm=TRUE)
   if (use.months) totals <- rowSums(totals) # aggregate months
   if (sum(totals)==0) stop("No positive observations in the data.")
@@ -350,7 +384,34 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     warning(sprintf("Data ends with %d years without positive observations.", n), call.=FALSE, immediate.=TRUE)
   }
 
+  ### ------------------------------------------------------------- Weights ----
+
+  # Convert weights to a matrix representation
+
+  # NB: re-use 'idx' from the construction of 'f'.
+
+  if (!use.months) {
+    wt <- matrix(1.0, nsite, nyear)
+    if (use.weights) wt[idx] <- weights
+  } else {
+    wt <- array(1.0, dim=c(nsite,nyear,nmonth))
+    if (use.weights) {
+      for (m in 1:M) {
+        wtm <- matrix(1.0, nsite, nyear)
+        midx <- month_nr==m
+        rows <- site_nr[midx]
+        cols <- year_nr[midx]
+        idx <- (cols-1)*nsite+rows
+        wtm[idx] <- weights[midx]
+        wt[ , ,m] <- wtm
+      }
+    }
+  }
+
+  ### ---------------------------------------------------------- Covariates ----
+
   # Create similar matrices for all covariates
+
   if (use.covars) {
     if (use.months) stop("months+covars not yet correctly implemented")
     cvmat <- list()
@@ -389,33 +450,17 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     cvmat <- NULL
   }
 
-  # idem for the weights
-  if (use.months) {
-    wt <- array(1.0, dim=c(nsite,nyear,nmonth))
-    if (use.weights) {
-      for (m in 1:M) {
-        wtm <- matrix(1.0, nsite, nyear)
-        midx <- month_nr==m
-        rows <- site_nr[midx]
-        cols <- year_nr[midx]
-        idx <- (cols-1)*nsite+rows
-        wtm[idx] <- weights[midx]
-        wt[ , ,m] <- wtm
-      }
-    }
-  } else {
-    wt <- matrix(1.0, nsite, nyear)
-    if (use.weights) wt[idx] <- weights
-  }
+  ## -------------------------------------------------------------- Indices ----
 
-  # We often need some specific subset of the data, e.g.\ all observations for site 3.
+  # We often need some specific subset of the data, e.g. all observations for site 3.
   # These are conveniently found by combining the following indices:
-  observed <- is.finite(f)  # Flags observed (TRUE) / missing (FALSE) data
-  positive <- is.finite(f) & f > 0.0 # Flags useful ($f_{i,j}>0$) observations
-  site_ii <- as.vector(slice.index(f,1)) # # Internal site identifiers are the row numbers of the original matrix.
+
+  observed <- is.finite(f)           # Flags observed (TRUE) / missing (FALSE) data
+  positive <- is.finite(f) & f > 0.0 # Flags useful (positive) observations
+  site_ii <- as.vector(slice.index(f,1)) # Internal site identifiers are the row numbers of the original matrix.
   #TODO: check site_ii==site_nr
-  nobs <- rowSums(observed) # Number of actual observations per site (alwso works with months)
-  npos <- rowSums(positive) # Number of useful ($f_{i,j}>0$) observations per site.
+  nobs <- rowSums(observed) # Number of actual observations per site (also works with months)
+  npos <- rowSums(positive) # Number of useful (positive) observations per site.
 
   # Store indices for observed counts
   obsi <- vector("list", nsite)
@@ -428,6 +473,10 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       obsi[[i]] <- as.vector(observed[i, ]) # use 2D
     }
   }
+
+  ## ---- covin stuff ----
+
+  # can only be done NOW, because we need 'nobs'
 
   # in case of covin: ensure that all matrices correspond to the right sites.
   # These latter are refactored, so we do that as well.
@@ -450,6 +499,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     }
   }
 
+  # ---------------------------------------------------- Setup changepoints ----
+
   if (model!=2 && length(changepoints) > 0)
     stop(sprintf("Changepoints cannot be specified for model %d", model), call.=FALSE)
 
@@ -458,6 +509,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   if (use.changepoints) {
     if (min(changepoints)>=1 && max(changepoints)<nyear) {
       # case 1: already in 1..J-1
+      # pass
     } else if (all(changepoints %in% year_id)) {
       # case 2: actual years (used); convert to 1..J-1
       changepoints <- match(changepoints, year_id)
@@ -467,19 +519,21 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     # Last checks
     stopifnot(all(changepoints >= 1L))
     stopifnot(all(changepoints < nyear))
-    stopifnot(all(diff(changepoints) > 0)) # changepoints must be in incraesing order
+    stopifnot(all(diff(changepoints) > 0)) # changepoints must be in increasing order
   }
 
-  # Setup B ----
+  # ------------------------------------------------- Setup design matrices ----
 
   # We make use of the generic model structure
-  # $$ \log\mu = A\alpha + B\beta $$
-  # where design matrices $A$ and $B$ both have $IJ$ rows.
+  #   \log\mu = A\alpha + B\beta
+  # where design matrices A and B both have I x J rows.
   # For efficiency reasons the model estimation algorithm works on a per-site basis.
-  # There is thus no need to store these full matrices. Instead, $B$ is constructed as a
-  # smaller matrix that is valid for any site, and $A$ is not used at all.
+  # There is thus no need to store these full matrices. Instead, B is constructed as a
+  # smaller matrix that is valid for any site, and A is not used at all.
 
-  # Create matrix $B$, which is model-dependent.
+  ## -------------------------------------------------------------------- B ----
+
+  # Create matrix B, which is model-dependent.
   if (!use.beta) {
     # Model 1 or Model 2 without changepoints.
     # These run easier if we have a fake beta with a fixed value of 1. Therefore, create a corresponding B
@@ -518,7 +572,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # For some purposes (e.g. vcov() ), we do need a dummy first column in B
   Bfull <- cbind(0, B)
 
-  # optionally add covariates. Each covar class (except class 1) adds an extra copy of $B$,
+  # optionally add covariates. Each covar class (except class 1) adds an extra copy of B,
   # where rows are cleared if that site/time combi does not participate in
   if (use.covars) {
     cvmask <- list()
@@ -536,8 +590,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     num.extra.beta.sets <- sum(nclass-1)
   }
 
-  # When we use covariates, $B$ is site-specific. We thus define a function to make
-  # the proper $B$ for each site $i$
+  # When we use covariates, B is site-specific.
+  # We thus define a function to make the proper B for each site i.
 
   B0 <- B # The "standard" B
   rm(B)
@@ -560,15 +614,17 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       Bfinal = B0
     }
     if (debug) { printf("make.B(%i): Bfinal:", i); str(Bfinal)}
-    Bfinal
+    return(Bfinal)
   }
 
   # ================================== Setup parameters and state variables ====
 
   # Parameter $\alpha$ has a unique value for each site.
   # alpha <- matrix(0, nsite,1) # Store as column vector
-  alpha <- matrix(log(rowSums(f, na.rm=TRUE)/nyear))
+  #alpha <- matrix(log(rowSums(f, na.rm=TRUE)/nyear))
   # alpha <- matrix(log(rowMeans(f*wt, na.rm=TRUE)));
+
+  alpha <- matrix(log(rowSums(f, na.rm=TRUE)/nyear))
 
   # Parameter $\beta$ is model dependent.
   # if (model==1) {
@@ -608,7 +664,9 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # Setup error handling
   err.out <- NULL
 
-  # ====================================================== Model estimation ====
+  # =================================================== 2. Model estimation ====
+
+  ## ---------------------------------------------------------------- alpha ----
 
   # TRIM estimates the model parameters $\alpha$ and $\beta$ in an iterative fashion,
   # so separate functions are defined for the updates of these and other variables needed.
@@ -672,8 +730,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     if (alpha_method==2 | !ok1) { # run method 2
       for (i in 1:nsite) {
         obs <- obsi[[i]] # observed[i, ]
-        f_i <- f[i, obs]
-        mu_i <- mu[i, obs]
+        f_i  <- if (use.months) as.vector(f[i,,])[obs] else f[i,obs]
+        mu_i <- if (use.months) as.vector(mu[i,,])[obs] else mu[i,obs]
         sumf <- sum(f_i)
         sumu <- sum(mu_i)
         dalpha <- if (sumf/sumu > 1e-7) log(sumf/sumu) else 0.0
@@ -765,7 +823,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     if (any(!is.finite(alpha))) stop("non-finite alpha problem")
   }
 
-  # ----------------------------------------------- Time parameters $\beta$ ----
+  ## ----------------------------------------------------------------- beta ----
 
   # Estimates for parameters $\beta$ are improved by computing a change in $\beta$ and
   # adding that to the previous values:
@@ -794,6 +852,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       problem <- "excessive low beta value"
       idx <- which(beta < -max_beta)[1]
     }
+    problematic_beta <- beta[idx]
     if (problem != "") {
       if (model==2) {
         # Where does the problem occur?
@@ -807,12 +866,12 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
           advice <- "\nYou might consider removing this month."
         }
         # Report
-        msg <- sprintf("Model can't be estimated due to %s at %s.%s", problem, problem_pos, advice)
+        msg <- sprintf("Model can't be estimated due to %s (%f) at %s.%s", problem, problematic_beta, problem_pos, advice)
       } else if (model==3) {
          # TODO: report faulty months as well.
         problem_pos <- sprintf("year #%d (%s)", idx+1, year_id[idx+1])
         advice <- "\n"
-        msg <- sprintf("Model can't be estimated due to %s at %s.%s", problem, problem_pos, advice)
+        msg <- sprintf("Model can't be estimated due to %s (%f) at %s.%s", problem, problematic_beta, problem_pos, advice)
       } else stop("Unexpected model:", model)
       stop(msg, call.=FALSE)
     }
@@ -847,7 +906,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     subiter
   }
 
-  # --------------------- Covariance and autocorrelation \label{covariance} ----
+  ## --------------------------------------- Covariance and autocorrelation ----
 
   # Covariance matrix $V_i$ is defined by
   # \begin{equation}
@@ -862,8 +921,9 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # \begin{equation}
   #   V_i = \sigma^2 \diag{\mu} \label{V2}
   # \end{equation}
+
   V_inv  <- vector("list", nsite) # Create storage space for $V_i^{-1}$.
-  Omega <- vector("list", nsite)
+  Omega  <- vector("list", nsite)
 
   update_V <- function(method=c("ML","GEE")) {
     for (i in 1:nsite) {
@@ -878,10 +938,15 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       } else {
         V_i <- sig2 * d_mu_i
       }
-      # if (any(abs(diag(V_i))<1e-12)) browser()
-      # printf("\n!!! Site: %d\n", i)
-      # print(mu_i)
-      # if (any(mu_i < 6e-18)) browser()
+      # todo: delete debug code?
+      # if (any(abs(diag(V_i))<1e-12)) {
+      #   printf("\n!!! Site: %d\n", i)
+      #   print(diag(V_i))
+      #   print(mu_i)
+      #   .mu <- mu[i,,]
+      #   print(.mu)
+      #   print(min(.mu[.mu > 0]))
+      # }
       V_inv[[i]] <<- solve(V_i) # Store $V^{-1}# for later use
       Omega[[i]] <<- d_mu_i %*% V_inv[[i]] %*% d_mu_i # idem for $\Omega_i$
     }
@@ -925,30 +990,32 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # Also, site-specific autocorrelation matrices $R_i$ are formed by removing the rows and columns from $R$
   # corresponding with missing observations.
   rho <- 0.0 # default value (ML)
+
   update_rho <- function() {
     # First estimate $\rho$
-    rho   <-  0.0
+    rho0   <-  0.0
     count <-  0
     if (use.months) {
+      #stop("Should not happen: serial correlation is only implemented for years, not months")
       for (i in 1:nsite) for (j in 1:(nyear-1)) for (m in 1:nmonth) {
         if (observed[i,j,m] && observed[i,j+1,m]) {
-          rho <- rho + r[i,j,m] * r[i,j+1,m]
+          rho0 <- rho0 + r[i,j,m] * r[i,j+1,m]
           count <- count+1
         }
       }
     } else {
       for (i in 1:nsite) for (j in 1:(nyear-1)) {
         if (observed[i,j] && observed[i,j+1]) { # short-circuit AND intended
-          rho <- rho + r[i,j] * r[i,j+1]
+          rho0 <- rho0 + r[i,j] * r[i,j+1]
           count <- count+1
         }
       }
     }
-    rho <<- rho / (count * sig2) # compute and store in outer environment
+    rho <<- rho0 / (count * sig2) # compute and store in outer environment
     # if (rho < 0) rho <<- 0.0 # Don't allow negative autocorrelation
   }
 
-  # ------------------------------------------ Overdispersion. \label{sig2} ----
+  # -------------------------------------------------------- Overdispersion ----
 
   # Dispersion parameter $\sigma^2$ is estimated as
   # \begin{equation}
@@ -957,7 +1024,9 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # where the $n$ terms are the number of observations, $\alpha$'s and $\beta$'s, respectively.
   # Summation is over the observed $i,j$ only.
   # and $r_{ij}$ are Pearson residuals (Section~\ref{r})
+
   sig2 <- 1.0 # default value (Maximum Likelihood case)
+
   update_sig2 <- function() {
     # analyse constrain_overdisp:
     # 0..1 : use Chi-squared approach
@@ -1005,13 +1074,14 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     if (!is.finite(sig2)) stop("Overdispersion problem")
   }
 
-  # -------------------------------------------- Pearson residuals\label{r} ----
+  # ----------------------------------------------------- Pearson residuals ----
 
   # Deviations between measured and estimated counts are quantified by the
   # Pearson residuals $r_{ij}$, given by
   # \begin{equation}
   #   r_{ij} = (f_{ij} - \mu_{ij}) / \sqrt{\mu_{ij}}
   # \end{equation}
+
   if (use.months) r <- array(0, dim=c(nsite,nyear,nmonth))
   else            r <- matrix(0, nsite, nyear)
 
@@ -1034,8 +1104,10 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # \begin{equation}
   #   d_i = z_i' \Omega_i z_i \label{d_i}
   # \end{equation}
+
   i_b <- 0
   U_b <- 0
+
   update_U_i <- function() {
     i_b <<- 0 # Also store in outer environment for later retrieval
     U_b <<- 0
@@ -1052,19 +1124,14 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       i_b <<- i_b - t(B_i) %*% (Omega[[i]] - (Omega[[i]] %*% ones %*% t(ones) %*% Omega[[i]]) / d_i) %*% B_i
       U_b <<- U_b + t(B_i) %*% d_mu_i %*% V_inv[[i]] %*% (f_i - mu_i)
     }
-    # # PWB todo: the following gerenates a bug in the Grutto user case (Jelle)
-    # print(i_b)
-    # cat("\n")
-    # print(eigen(i_b)$values)
-    # print(colSums(i_b))
-    # print(abs(colSums(i_b)))
-    # if (use.beta && all(abs(colSums(i_b))< 1e-12)) stop("Data does not contain enough information to estimate model.", call.=FALSE)
+    # PWB todo: the following gerenates a bug in the Grutto user case (Jelle)
+    #print(i_b)
+    #cat("\n")
+    #print(eigen(i_b)$values)
+    #print(colSums(i_b))
+    #print(abs(colSums(i_b)))
+    if (use.beta && all(abs(colSums(i_b))< 1e-12)) stop("Data does not contain enough information to estimate model.", call.=FALSE)
 
-    #
-    # invertable <- class(try(solve(i_b), silent=T))=="matrix" # not R4.0 compatible; use "matrix" %in% class() instead!
-    # if (!invertable) {
-    #   browser()
-    # }
   }
 
   # ------------------------------------------------------- Count estimates ----
@@ -1075,31 +1142,47 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # parameters $\alpha_i$ are used directly:
   # $$ \mu_i^t = \exp(\alpha_i^t + B\beta^{t-1} - \log w) $$
   update_mu <- function(fill) {
+    min_allowed_mu <- 1e-12
+
     for (i in 1:nsite) {
       B = make.B(i)
 
       if (use.months) {
-        if (use.weights) mu[i, , ] <<- (exp(alpha[i] + B %*% beta) / as.vector(wt[i,,]))
-        else             mu[i, , ] <<-  exp(alpha[i] + B %*% beta)
+        # compute
+        if (use.weights) mu1 <- (exp(alpha[i] + B %*% beta) / as.vector(wt[i,,]))
+        else             mu1 <-  exp(alpha[i] + B %*% beta)
+        # prevent mu ~ 0
+        mu2 <- pmax(mu1, min_allowed_mu)
+        # update
+        mu[i,,] <<- mu2
       } else {
-        if (use.weights) mu[i, ]   <<- (exp(alpha[i] + B %*% beta) / wt[i, ])
-        else             mu[i, ]   <<-  exp(alpha[i] + B %*% beta)
+        # compute
+        if (use.weights) mu1   <- (exp(alpha[i] + B %*% beta) / wt[i, ])
+        else             mu1   <-  exp(alpha[i] + B %*% beta)
+        # prevent mu ~ 0
+        mu2 <- pmax(mu1, min_allowed_mu)
+        # update
+        mu[i,] <<- mu2
       }
-      # browser()
+
+      # new (2026-01-10): constrain mu to be 1e-12
+      # update 2026-01-22: modify *global* mu!
+      # mu <<- pmax(mu, min_allowed_mu)
 
       # Do not allow very small estimates, because that screws up the computation of $V$.
       # Anyway, the model is not designed to predict 0's
       if (use.months) {
         for (m in 1:M) {
-          mu_check <- mu[i, ,m] < 1e-12
+          mu_check <- mu[i, ,m] < min_allowed_mu
           if (any(mu_check)) {
             j <- which(mu_check)[1]
+            # print(min(mu[i, ,m]))
             msg <- sprintf("Zero expected value at year %d month %d\n", year_id[j], month_id[m])
             stop(msg, call.=FALSE)
           }
         }
       } else {
-        mu_check <- mu[i, ] < 1e-12
+        mu_check <- mu[i, ] < min_allowed_mu
         if (any(mu_check)) {
           j <- which(mu_check)[1]
           msg <- sprintf("Zero expected value at year %d\n", year_id[j])
@@ -1109,6 +1192,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     }
     # clear estimates for non-observed cases, if required.
     if (!fill) mu[!observed] <<- 0.0
+
+    # return(mu)
   }
 
   # ------------------------------------------------------------ Likelihood ----
@@ -1157,8 +1242,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       # rprintf(" Max change: %10e %10e %10e ", max_par_change, max_cnt_change, max_lik_change)
       # rprintf(" Max change: %10e %10e %10e ", rho_change, sig_change, beta_change)
       rprintf(" (max change:")
-      if (overdisp)  rprintf(" sig^2=%.3e", sig_change)
-      if (serialcor) rprintf(" rho=%.3e", rho_change)
+      if (overdisp  && sig_change>0) rprintf(" sig2=%.3e", sig_change)
+      if (serialcor && rho_change>0) rprintf(" rho=%.3e",  rho_change)
       rprintf(" beta=%.3e)", beta_change)
     } else {
       convergence = FALSE
@@ -1193,12 +1278,40 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     if (!is.null(err.out)) return(err.out)
     update_mu(fill=FALSE)
     if (method=="GEE") {
-      update_r()
-      if (serialcor || overdisp)  update_sig2() # hack
-      if (serialcor) update_rho()
-      update_R()
-      if (!overdisp) sig2 <- 1.0 # hack
+
+      # Bestaande methode, met de hack
+      if (BC) {
+        # Backwards compatible with Delphi TRIM
+        update_r()
+        if (serialcor || overdisp)  update_sig2() # hack
+        if (serialcor) update_rho()
+        update_R()
+        if (!overdisp) sig2 <- 1.0 # hack
+      } else {
+        # Nieuwe methode, zonder update van sig2
+        update_r()
+        if (overdisp)  update_sig2()
+        if (serialcor) {
+          update_rho()
+          xtra <- ""
+          if (!overdisp) xtra <- " (Maybe because overdispersion has been switched off.)"
+          if (rho < 0) {
+            msg <- sprintf("rho (%.3f) < 0; probably the model has been misspecified.%s", rho, xtra)
+            cat("\n")
+            stop(msg)
+          }
+          if (rho > 1) {
+            msg <- sprintf("rho (%.3f) >> 1; probably the model has been misspecified.%s", rho, xtra)
+            cat("\n")
+            stop(msg)
+          }
+        }
+
+        update_R()
+      }
+
     }
+    # if (iter>20) browser()
     update_V(method)
     if (use.beta) { # model 2+changepoints, or model 3
       update_U_i() # update Score $U_b$ and Fisher Information $i_b$
@@ -1207,8 +1320,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
       rprintf("; %d subiters)", subiters)
     }
     rprintf("; lik=%.3f", likelihood())
-    if (overdisp)  rprintf("; sig^2=%.3f", sig2)
-    if (serialcor) rprintf("; rho=%.3f;", rho)
+    if (method=="GEE" && overdisp)  rprintf("; sig^2=%.3f", sig2)
+    if (method=="GEE" && serialcor) rprintf("; rho=%.3f;",  rho)
 
     convergence <- check_convergence(iter)
 
@@ -1232,12 +1345,16 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   }
 
   # If we reach the preset maximum number of iterations, we clearly have not reached
-  # convergence.
+  # convergence. Issue a warning in that case.
   converged <- iter < max_iter
-  convergence_msg <- sprintf("%s reached after %d iterations",
-                             ifelse(convergence,"Convergence","No convergence"),
+  convergence_msg <- sprintf("%s has been reached after %d iterations.\n",
+                             ifelse(converged,"Convergence", "No convergence"),
                              iter)
-  rprintf("%s\n", convergence_msg)
+  if (converged) {
+    rprintf(convergence_msg)
+  } else {
+    warning(convergence_msg, call.=FALSE, immediate.=TRUE)
+  }
 
   # Warn the user if a very low serial correlation has been found
   if (serialcor && rho < 0.2) {
@@ -1249,7 +1366,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # Run the final model
   update_mu(fill=TRUE)
 
-  # Covariance matrix
+  # Compute the covariance matrix
   if (use.beta) V <- -solve(i_b)
 
   if (use.covin) {
@@ -1279,16 +1396,18 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   # Variance of the $\beta$'s is given by the covariance matrix
   if (use.beta) var_beta = V
 
-  # ============================================================ Imputation ====
+
+  ## ----------------------------------------------------------- Imputation ----
 
   # The imputation process itself is trivial: just replace all missing observations
   # $f_{i,j}$ by the model-based estimates $\mu_{i,j}$.
+
   imputed <- ifelse(observed, f, mu)
 
-  # ============================================= Output and postprocessing ====
+  # --------------------------------------------------- Setup output object ----
 
-  # Measured, modelled and imputed count data are stored in a TRIM output object,
-  # together with parameter values and other usefull information.
+  # Measured, modeled and imputed count data are stored in a TRIM output object,
+  # together with parameter values and other useful information.
 
   #todo: fix time_id below (change to year_id)
 
@@ -1297,6 +1416,8 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
             nbeta0=nbeta0, covars=covars, ncovar=ncovar, cvmat=cvmat,
             model=model, changepoints=changepoints, converged=converged,
             mu=mu, imputed=imputed, alpha=alpha)
+  class(z) <- "trim"
+
   if (use.beta) {
     z$beta <- beta
     z$var_beta <- var_beta
@@ -1318,13 +1439,13 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     z$ncovar <- ncovar # todo: eliminate?
     z$nclass <- nclass
   }
+
   if (use.weights) {
     z$wt = wt
   } else {
     # Do nothing
   }
 
-  class(z) <- "trim"
 
   # Several kinds of statistics can now be computed, and added to this output object.
 
@@ -1343,15 +1464,13 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   if (model==2 && use.beta) {
     se_beta  <- sqrt(diag(var_beta))
 
-    # browser()
-
     # beta-coefficients are stored in a particular order.
-    # We always have the baseline changepoint beta's, optionally followd by the baseline
+    # We always have the baseline changepoint beta's, optionally followed by the baseline
     # monthly beta's. This is the baseline `set'.
-    # Optionally, we have multiple sets, one each for every covariate category (expcept the first)
+    # Optionally, we have multiple sets, one each for every covariate category (except the first)
     nset <- ifelse(use.covars, num.extra.beta.sets+1, 1)
 
-    coefs <- data.frame() # start withh empty data frame
+    coefs <- data.frame() # start with an empty data frame
 
     offset <- 0L
     for (set in 1:nset) {
@@ -1435,7 +1554,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     # Finally, we compute the standard error as $\se{\gamma} = \sqrt{\diag{\var{\gamma}}}$
     se_gamma  <-  sqrt(diag(var_gamma))
 
-    # The standard error of the multiplicative parameters $g_j$ is opproximated by
+    # The standard error of the multiplicative parameters $g_j$ is approximated by
     # using the delta method, which is based on a Taylor expansion:
     # \begin{equation}
     #   \var{f(\theta)} = \left(f'(\theta)\right)^2 \var{\theta}
@@ -1448,7 +1567,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
 
     # Baseline coefficients.
     # Note that, because $\gamma_1\equiv0$, it was not estimated,
-    # and as a results $j=1$ was not incuded in $i_b$, nor in $\var{gamma}$ as computed above.
+    # and as a results $j=1$ was not included in $i_b$, nor in $\var{gamma}$ as computed above.
     # We correct this by adding the `missing' 0 (or 1 for multiplicative parameters) during output
     if (!use.months) { # Normal version (years, no months)
       idx = 1:(J-1)
@@ -1505,10 +1624,11 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
   }
 
 
-  # ----------------------------------------------------------- Time totals ----
+  ## ---------------------------------------------------------- Time totals ----
 
   # Recompute Score matrix $i_b$ with final $\mu$'s
-  saved.ib = i_b
+
+  saved.ib = i_b # todo: kan weg, wordt niet gebruikt.
   ib <- 0
   for (i in 1:nsite) {
     B <- make.B(i)
@@ -1634,7 +1754,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     } else { # Use input covariance
       if (model==4) stop("Alas, covin+model 4 not implemented for model 4")
       if (!is.null(mask)) stop("Alas, covariates+upscaling not implemented yet.");
-      # First loop op sites to compute $GF - H$.
+      # First iterate over sites to compute $GF - H$.
       GFminH = matrix(0, nyear, nbeta)
       for (i in 1:nsite) { # First loop
         u <-  mu[i, ]
@@ -1802,7 +1922,7 @@ trim_workhorse <- function(count, site, year, month, weights, covars,
     }
   } else z$covar_tt <- NULL
 
-  # ----------------------------------------- Reparameterisation of Model 3 ----
+  ## ---------------------------------------- Reparameterisation of Model 3 ----
 
   # Here we consider the reparameterization of the time-effects model in terms of
   # a model with a linear trend and deviations from this linear trend for each time point.

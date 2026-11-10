@@ -1,5 +1,18 @@
+version 2.4.0
+- NAs in weights are now treated correctly (thanks to Felix Petersma for pointing this out
+- Vastly improved the checking of data
+- Improved treatment and testing of categorial covariates.
+- Fixed estimation algorithm for cases where overdisp=FALSE and serialcor=TRUE
+- Added new option "BC" for backward compatibility with the Deplphi TRIM (i.e. without above mentiond fix)
+- Simplified plotting output
+- Enabled multiple Wald tests (testing for deviations from log-OLS for model3 + covariates not yet implemented, though)
+- Now suggesting to add count=NA records to prevent "no constant interval" errors (thanks to Tomas Telensky)
+- Fixed a bug in overall() that caused testing for p<0.001, not p<0.01 as intended (Thanks to 'Odd bird')
+- Now allowing stepwise refinement for month factors
+
 version 2.3.1
-- Fixed invalid URLs in function docs
+- Exported weights in results()
+- redesigned autodelete()
 
 version 2.3.0
 - Updated the FAQ
@@ -73,3 +86,4 @@ version 1.0.2
 
 version 1.0.1
 - initial CRAN release
+

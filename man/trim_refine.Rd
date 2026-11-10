@@ -40,7 +40,7 @@ trim_refine(
 \item{penter}{threshold probability for re-introduction of parameters.}
 }
 \value{
-a list of class \code{trim}, that opcontains all output, statistiscs, etc.
+a list of class \code{trim}, that contains all output, statistics, etc.
   Usually this information is retrieved by a set of postprocessing functions
 }
 \description{

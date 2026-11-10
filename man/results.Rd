@@ -2,7 +2,8 @@
 % Please edit documentation in R/trim_post.R
 \name{results}
 \alias{results}
-\title{collect observed, modelled, and imputed counts from TRIM output}
+\title{collect observed, modelled, and imputed counts from TRIM output,
+as well as weights (if applicable)}
 \usage{
 results(z)
 }
@@ -11,11 +12,12 @@ results(z)
 }
 \value{
 A \code{data.frame}, one row per site-time combination, with columns for
-site, year, month (optionally), observed counts, modelled counts and imputed counts.
+site, year, month (optionally), observed counts, modelled and imputed counts, and weights
 Missing observations are marked as \code{NA}.
 }
 \description{
-collect observed, modelled, and imputed counts from TRIM output
+collect observed, modelled, and imputed counts from TRIM output,
+as well as weights (if applicable)
 }
 \examples{
 data(skylark)

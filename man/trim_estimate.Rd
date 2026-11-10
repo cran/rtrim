@@ -16,6 +16,7 @@ trim_estimate(
   overdisp,
   serialcor,
   autodelete,
+  min_obs = 1L,
   stepwise,
   covin,
   verbose = FALSE,
@@ -33,7 +34,7 @@ trim_estimate(
 
 \item{weights}{an optional numerical vector of weights.}
 
-\item{covars}{an optional data frame withcovariates}
+\item{covars}{an optional data frame with covariates}
 
 \item{model}{a model type selector (1, 2 or 3)}
 
@@ -45,14 +46,16 @@ trim_estimate(
 
 \item{autodelete}{a flag indicating auto-deletion of changepoints with too little observations.}
 
+\item{min_obs}{minimum number of observations per linear piece in model 2.}
+
 \item{stepwise}{a flag indicating stepwise refinement of changepoints is to be used.}
 
 \item{covin}{a list of variance-covariance matrices; one per pseudo-site.}
 
-\item{verbose}{flag to enable addtional output during a single run.}
+\item{verbose}{flag to enable additional output during a single run.}
 }
 \value{
-a list of class \code{trim}, that contains all output, statistiscs, etc.
+a list of class \code{trim}, that contains all output, statistics, etc.
   Usually this information is retrieved by a set of postprocessing functions
 }
 \description{

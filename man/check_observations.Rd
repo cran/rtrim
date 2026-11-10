@@ -13,6 +13,7 @@ check_observations(x, ...)
   x,
   model,
   count_col = "count",
+  site_col = "site",
   year_col = "year",
   month_col = NULL,
   covars = character(0),
@@ -34,6 +35,8 @@ check_observations(x, ...)
 
 \item{count_col}{\code{[character|numeric]} column index of the counts in \code{x}}
 
+\item{site_col}{\code{[character|numeric]} column index of the sites in \code{x}}
+
 \item{year_col}{\code{[character|numeric]} column index of years or time points in \code{x}}
 
 \item{month_col}{\code{[character|numeric]} optional column index of months in \code{x}}
@@ -45,30 +48,14 @@ check_observations(x, ...)
 \item{eps}{\code{[numeric]} Numbers whose absolute magnitude are lesser than \code{eps} are considered zero.}
 }
 \value{
-A \code{list} with two components. The component \code{sufficient} takes the value
-\code{TRUE} or \code{FALSE} depending on whether sufficient counts have been found.
-The component \code{errors} is a \code{list}, of which the structure depends on the chosen model,
-that indicates under what conditions insufficient data is present to estimate the model.
+An error message, or an empty string.
 
-\itemize{
-\item{For model 3 without covariates, \code{$errors} is a list whose single element is a vector of time
-points with insufficient counts}.
-\item{For model 3 with covariates, \code{$errors} is a named list with an element for each covariate
-for which insufficients counts are encountered. Each element is a two-column \code{data.frame}. The
-first column indicates the time point, the second column indicates for which covariate value insufficient
-counts are found.}
-\item{For Model 2, without covariates \code{$errors} is a list with a single
-element \code{changepoints}. It points out what changepoints lead to a time
-slice with zero observations.}
-\item{For Model 2, with covariates \code{$errors} is a named list with an
-element for each covariate for which inssufficients counts are encountered.
-Each element is a two-column \code{data.frame}, The first colum indicates the
-changepoint, the second column indicates for which covariate value
-insufficient counts are found.}
-}
+An error message, or an empty string.
 }
 \description{
-Check whether there are sufficient observations to run a model
+Data sets need to contain sufficient information to uniquely identify the value
+of all model parameters. For example, if site A has only one observation, day for year J,
+this observation cannot be used to estimate the year factor for year J as well.
 }
 \seealso{
 Other modelspec: 

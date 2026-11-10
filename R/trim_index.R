@@ -1,4 +1,4 @@
-# ################################################################# Indices ####
+# TRIM Index value
 
 
 # ============================================= Internal workhorse function ====
@@ -52,6 +52,17 @@
 }
 
 
+#' Workhorse function for index()
+#'
+#' @param tt vector of time totals
+#' @param var_tt variance of tt
+#' @param base base year (1..J)
+#' @param level confidence level, e.g. 0.95 for 95%
+#' @param sig2 overdispersion parameter
+#' @param formal switch between formal and 'scaled' indices.
+#'
+#' @returns index
+#' @noRd
 .index <- function(tt, var_tt, base, level=NULL, sig2=NULL, formal=TRUE) {
 
   nbase <- length(base)
@@ -92,9 +103,13 @@
 
   # Optionally add confidence interval
   if (!is.null(level)) {
-    mul <- ci_multipliers(lambda=tt, sig2=sig2, level=level)
-    out$lo_tau <- tau - mul$lo * sqrt(var_tau)
-    out$hi_tau <- tau + mul$hi * sqrt(var_tau)
+    # Old approach (disabled)
+    # mul <- ci_multipliers(lambda=tt, sig2=sig2, level=level)
+    # out$lo_tau <- tau - mul$lo * sqrt(var_tau)
+    # out$hi_tau <- tau + mul$hi * sqrt(var_tau)
+    ci <- new_confidence_interval(tau, sqrt(var_tau), level)
+    out$lo_tau <- ci$lo
+    out$hi_tau <- ci$hi
   }
 
   out
@@ -440,7 +455,7 @@ plot.trim.index <- function(x, ..., names=NULL, covar="auto", xlab="auto", ylab=
   aqua   <- brewer_set1
   if (mode==1 || mode==2) {
     # one or multiple indices: different colors, but same transparency
-    for (i in seq_along(aqua)) aqua[i] <- adjustcolor(aqua[i], 0.5)
+    for (i in seq_along(aqua)) aqua[i] <- adjustcolor(aqua[i], alpha.f=0.3)
   } else if (mode==3) {
     # covariates: main index is darker than the covariates
     aqua[1] <- adjustcolor(aqua[1], 0.5)
@@ -621,7 +636,7 @@ plot.trim.index <- function(x, ..., names=NULL, covar="auto", xlab="auto", ylab=
     xx <- c(ser$x, rev(ser$x))
     yy <- c(ser$yslo, rev(ser$yshi))
     polygon(xx, yy, col=ser$fill, border=NA)
-    segments(ser$x, ser$yslo, ser$x, ser$yshi, col="white", lwd=2)
+    #segments(ser$x, ser$yslo, ser$x, ser$yshi, col="white", lwd=2)
   }
   # Optionally confidence intervals
   for (i in rev(1:nseries)) {
@@ -634,7 +649,7 @@ plot.trim.index <- function(x, ..., names=NULL, covar="auto", xlab="auto", ylab=
   for (i in rev(1:nseries)) {
     ser <- series[[i]]
     lines(ser$x, ser$y, col=ser$stroke, lwd=2, lty=ser$lty)
-    points(ser$x, ser$y, col=ser$stroke, pch=16)
+    #points(ser$x, ser$y, col=ser$stroke, pch=16)
   }
 
   # Plot legend if appropriate

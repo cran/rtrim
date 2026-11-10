@@ -22,7 +22,7 @@
 #'
 #' For users of the original Windows TRIM software:
 #' \itemize{
-#' \item\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users}
+#' \item\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM3 users}
 #' }
 #'
 #' For users who would like to have more insight what is going on under the hood:
@@ -42,7 +42,7 @@
 #' @importFrom utils read.table head tail str capture.output packageVersion
 #' @importFrom grDevices  gray rgb hcl adjustcolor col2rgb
 #' @importFrom graphics lines plot points polygon segments title abline legend par rasterImage rect
-#' @importFrom stats pchisq qchisq pt qt qnorm time setNames quantile qgamma
+#' @importFrom stats pchisq qchisq pt qt qnorm time setNames quantile qgamma optim
 #'
 {}
 

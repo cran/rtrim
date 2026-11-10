@@ -37,7 +37,7 @@
 #'
 #' Note that the original TRIM erroneously assumed that the estimated overall trend
 #' magnitude is t-distributed, while in fact it is normally distributed, which is being used within rtrim.
-#' The option \code{bc=TRUE} can be set to force backward compability, for e.g. comparison purposes.
+#' The option \code{bc=TRUE} can be set to force backward compatability, for e.g. comparison purposes.
 #'
 #' @return a list of class \code{trim.overall} containing, a.o., overall slope
 #'   coefficients (\code{slope}), augmented with p-values and an interpretation).
@@ -62,7 +62,7 @@
 #' # slope from time point 1 to 5
 #' overall(z,changepoints=c(1,5,7))
 overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0), bc=FALSE) {
-  stopifnot(class(x)=="trim")
+  stopifnot(inherits(x, "trim"))
   which <- match.arg(which)
 
   # Handle automatic selection of changepoints based on the model
@@ -104,7 +104,7 @@ overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0), bc=
 
   .meaning <- function(bhat, berr, df) {
     if (df<=0) return("Unknown (df<=0)")
-    alpha = c(0.05, 0.001)
+    alpha = c(0.05, 0.01)
     stopifnot(df>0)
     if (bc) {
       # Backwards compatbility, not recommended
@@ -117,12 +117,12 @@ overall <- function(x, which=c("imputed","fitted"), changepoints=numeric(0), bc=
 
     # Trends are linear in the additive domain (log-counts);
     # to interpret them in the counts domain, we have to take the exp()
-    # (multiplicattive domain)
+    # (multiplicative domain)
 
     #                            0.95  1.0   1.05
     #                             v     v     v
     # Strong decrease   |---x---| .     .     .
-    # Moderate decreate      |---x---|  .     .
+    # Moderate decrease      |---x---|  .     .
     # Stable                      . |---x---| .
     # Moderate increase           .       |---x---|
     # Strong increase             .           .  |---x---|
@@ -386,6 +386,7 @@ trendlines <- function(x) {
         sumdj2 <- sum((j-mean(j))^2)
         SSR = X$SSR[i] # Get stored SSR as computed by overall()
         dy <- t * sqrt((SSR/df)*(1/ntpt + dx2/sumdj2))
+        #print(c(t, SSR,df,ntpt,sumdj2))
         ylo <- exp(a + b*x - dy)
         yhi <- exp(a + b*x + dy)
       }

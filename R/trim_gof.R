@@ -39,7 +39,7 @@ gof <- function(x) UseMethod("gof")
 #' @export
 #' @rdname gof
 gof.trim <- function(x) {
-  stopifnot(class(x)=="trim")
+  stopifnot(inherits(x, "trim"))
   gof_numeric(x$f, x$mu, x$alpha, x$beta)
 }
 

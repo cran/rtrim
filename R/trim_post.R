@@ -1,7 +1,6 @@
-# ########################################### TRIM postprocessing functions ####
+# TRIM postprocessing functions
 
 # ================================================================= Print ======
-
 
 #' print a 'trim' object
 #'
@@ -20,8 +19,7 @@ print.trim <- function(x,...){
 
 # ================================================================= Summary ====
 
-# ----------------------------------------------------------------- extract ----
-
+## ----------------------------------------------------------------- extract ---
 
 #' Summary information for a TRIM job
 #'
@@ -58,7 +56,6 @@ summary.trim <- function(object,...) {
     , convergence = object$convergence
   ),class="trim.summary")
 }
-
 
 #' @export
 #' @keywords internal
@@ -215,7 +212,7 @@ coef.trim <- function(object,
 
 # ============================================================= Time totals ====
 
-# ----------------------------------------------------------------- Extract ----
+## ---------------------------------------------------------------- Extract ----
 
 #' Extract time-totals from TRIM output
 #'
@@ -256,8 +253,15 @@ coef.trim <- function(object,
 #' totals(z, "both") # mimics classic TRIM
 #'
 totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL, long=FALSE) {
-  stopifnot(class(x)=="trim")
+  stopifnot(inherits(x, "trim"))
   which <- match.arg(which)
+
+  # Check confidence interval level, if used
+  if (!is.null(level)) {
+    if (!is.numeric(level)) stop("totals(): argument for parameter 'level' must be a numeric")
+    if (length(level)!=1)   stop("totals(): argument for parameter 'level' must be a scalar")
+    if (level<=0 || level>=1) stop("totals(): argument for parameter 'level' must be between 0 and 1")
+  }
 
   if (long==FALSE) { # Old version, for backwards compatibility
     # Select output columns from the pre-computed time totals
@@ -273,11 +277,12 @@ totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL,
     # Optionally add a confidence interval
     if (!is.null(level)) {
       if (ncol(tt)>4) stop("Confidence intervals can only be computed for either imputed or fitted time totals, but not for both")
-      mul <- ci_multipliers(lambda=tt[[2]], sig2=x$sig2, level=level)
-      tt$lo <- tt[[2]] - tt[[3]] * mul$lo
-      tt$hi <- tt[[2]] + tt[[3]] * mul$hi
-      # BUGFIX:
-      ci <- new_confidence_interval(tt[[2]], tt[[3]], level-level)
+      # Disabling dysfunctional old approach
+      # mul <- ci_multipliers(lambda=tt[[2]], sig2=x$sig2, level=level)
+      # tt$lo <- tt[[2]] - tt[[3]] * mul$lo
+      # tt$hi <- tt[[2]] + tt[[3]] * mul$hi
+      # New approach:
+      ci <- new_confidence_interval(tt[[2]], tt[[3]], level=level)
       tt$lo <- ci$lo
       tt$hi <- ci$hi
     }
@@ -321,9 +326,13 @@ totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL,
 
     # Optionally add a confidence interval
     if (!is.null(level)) {
-      mul <- ci_multipliers(lambda=tt$value, sig2=x$sig2, level=level)
-      tt$lo <- tt$value - tt$SE * mul$lo
-      tt$hi <- tt$value + tt$SE * mul$hi
+      # disabled old approach
+      # mul <- ci_multipliers(lambda=tt$value, sig2=x$sig2, level=level)
+      # tt$lo <- tt$value - tt$SE * mul$lo
+      # tt$hi <- tt$value + tt$SE * mul$hi
+      # New approach:
+      ci <- new_confidence_interval(tt$value, tt$SE, level)
+      tt <- cbind(tt, ci)
     }
   }
 
@@ -335,7 +344,7 @@ totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL,
   return(tt)
 }
 
-#------------------------------------------------------------------ Export ----
+## ----------------------------------------------------------------- Export ----
 
 # export <- function(x, species, stratum) UseMethod("export")
 #
@@ -349,7 +358,7 @@ totals <- function(x, which=c("imputed","fitted","both"), obs=FALSE, level=NULL,
 #   print(df, row.names=FALSE)
 # }
 
-#------------------------------------------------------------------ Plot -----
+## ------------------------------------------------------------------ Plot -----
 
 
 #' Plot time-totals from trim output.
@@ -430,8 +439,7 @@ plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals"
   brewer_set1 <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33","#A65628","#F781BF","#999999")
   opaque <- brewer_set1
   aqua   <- brewer_set1
-  for (i in seq_along(aqua)) aqua[i] <- adjustcolor(aqua[i], 0.5)
-
+  for (i in seq_along(aqua)) aqua[i] <- adjustcolor(aqua[i], alpha.f=0.3)
 
   # 3. Setup series
 
@@ -535,7 +543,7 @@ plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals"
     xx <- c(ser$x, rev(ser$x))
     yy <- c(ser$y_se_lo, rev(ser$y_se_hi))
     polygon(xx, yy, col=ser$fill, border=NA)
-    segments(ser$x, ser$y_se_lo, ser$x, ser$y_se_hi, col="white", lwd=2)
+    #segments(ser$x, ser$y_se_lo, ser$x, ser$y_se_hi, col="white", lwd=2)
   }
 
   # Optionally: confidence interval
@@ -551,7 +559,7 @@ plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals"
   for (i in rev(1:nseries)) {
     ser <- series[[i]]
     lines(ser$x, ser$y, col=ser$stroke, lwd=2, lty=ser$lty)
-    points(ser$x, ser$y, col=ser$stroke, pch=16)
+    #points(ser$x, ser$y, col=ser$stroke, pch=16)
   }
 
   # Optional: observations (sans standard error)
@@ -576,7 +584,7 @@ plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals"
   }
 
 
-  #### old ####
+  ### old ###
 
 
   # # Build a list of time-totals with optional titles
@@ -687,6 +695,8 @@ plot.trim.totals <- function(x, ..., names=NULL, xlab="auto", ylab="Time totals"
 #' @return matrix with multipliers. col1=lo; col2=hi
 ci_multipliers <- function(lambda, sig2=NULL, level=0.95)
 {
+  stop("ci_multipliers must not be used")
+
   if (is.null(sig2)) sig2 <- 1.0
   if (sig2<1) stop("Overdispersion must be >= 1")
   # Quantiles
@@ -702,15 +712,39 @@ ci_multipliers <- function(lambda, sig2=NULL, level=0.95)
   out
 }
 
-new_confidence_interval <- function(lambda, se, level=0.95)
+# Compute a confidence interval for time totals or indices,
+# assuming an underlying Gamma distribution,
+# and parameterized by the expected value lambda and the standard error SE.
+#
+# param lambda Expected value.
+# param SE     Standard Error.
+# param level Confidence level (e.g, 0.95 for a 95\% confidence interval).
+#
+# returns a dataframe with columns lo and hi.
+#
+# examples
+#   new_confidence_interval(100, 15)
+new_confidence_interval <- function(lambda, SE, level=0.95)
 {
-  sig2 <- se^2 / lambda
+  if (length(lambda) != length(SE)) stop("new_confidence_interval(): lambda and SE must have the same length")
+  n <- length(lambda)
+  qlo <- numeric(n)
+  qhi <- numeric(n)
+
+  # only compute CI for SE>0; use lo=hi=lambda elsewhere
+  sig2 <- SE^2 / lambda
+  ok <- sig2>0
+
   # Quantiles
   alpha <- 1-level
-  qhi <- qgamma(p=1-alpha/2, shape=lambda/sig2, scale=sig2)
-  qlo <- qgamma(p=  alpha/2, shape=lambda/sig2, scale=sig2)
-  out <- data.frame(lo=qlo, hi=qhi)
-  out
+  qlo[ok] <- qgamma(p=  alpha/2, shape=lambda[ok]/sig2[ok], scale=sig2[ok])
+  qhi[ok] <- qgamma(p=1-alpha/2, shape=lambda[ok]/sig2[ok], scale=sig2[ok])
+
+  # SE=0 cases
+  nok <- !ok
+  qlo[nok] <- lambda[nok]
+  qhi[nok] <- lambda[nok]
+  data.frame(lo=qlo, hi=qhi)
 }
 
 
@@ -764,19 +798,19 @@ confint.trim <- function(object, parm=c("imputed","fitted"), level=0.95, ...) {
   lo <- ci$lo
   hi <- ci$hi
 
-  # Combine and label
+  # Convert to matrix and label
   CI <- cbind(lo, hi)
-  pctlo <- sprintf("%.1f %%", 100 * ((1-level)/2))
-  pcthi <- sprintf("%.1f %%", 100 * (1-(1-level)/2))
-  colnames(CI) <- c(pctlo,pcthi)
-  # Return
+  lo_label <- sprintf("%.1f %%", 100 * ((1-level)/2))
+  hi_label <- sprintf("%.1f %%", 100 * (1-(1-level)/2))
+  colnames(CI) <- c(lo_label,hi_label)
+
   CI
 }
 
 
 # ============================================== Variance-Covariance matrix ====
 
-# ----------------------------------------------------------------- extract ----
+## ---------------------------------------------------------------- extract ----
 
 #' Extract variance-covariance matrix from TRIM output
 #'
@@ -807,20 +841,19 @@ vcov.trim <- function(object, which = c("imputed","fitted"), ... ) {
 }
 
 
-
-
 # ================================================================= Results ====
 
 # Function \verb!result()! collects and combines the observed, modelled, and imputed
 # counts. These results are presented as a data frame, which is readily exported to
 # a file by the user.
 
-#' collect observed, modelled, and imputed counts from TRIM output
+#' collect observed, modelled, and imputed counts from TRIM output,
+#' as well as weights (if applicable)
 #'
 #' @param z TRIM output structure (i.e., output of a call to \code{trim})
 #'
 #' @return A \code{data.frame}, one row per site-time combination, with columns for
-#' site, year, month (optionally), observed counts, modelled counts and imputed counts.
+#' site, year, month (optionally), observed counts, modelled and imputed counts, and weights
 #' Missing observations are marked as \code{NA}.
 #'
 #' @export
@@ -833,6 +866,8 @@ vcov.trim <- function(object, which = c("imputed","fitted"), ... ) {
 results <- function(z) {
   stopifnot(inherits(z,"trim"))
 
+  wt <- !is.null(z$wt)
+
   if (z$nmonth==1) {
     # No months
     out <- data.frame(
@@ -842,6 +877,7 @@ results <- function(z) {
       fitted   = as.vector(t(z$mu)),
       imputed  = as.vector(t(z$imputed))
     )
+    if (wt) out$weights <- as.vector(t(z$wt))
   } else {
     # With monthts
     out <- data.frame(
@@ -852,6 +888,7 @@ results <- function(z) {
       fitted   = as.vector(aperm(z$mu, c(3,2,1))),
       imputed  = as.vector(aperm(z$imputed, c(3,2,1)))
     )
+    if (wt) out$weights = as.vector(aperm(z$wt, c(3,2,1)))
   }
   class(out) <- c("trim.results","data.frame")
   out
@@ -859,19 +896,20 @@ results <- function(z) {
 
 #' @export
 plot.trim.results <- function(x, ...) {
-  sites = levels(x$site)
-  nsite = nlevels(x$site)
+  fsite <- as.factor(x$site)
+  sites = levels(fsite)
+  nsite = nlevels(fsite)
   hues = seq(0, 360, length.out = nsite+1)[1:nsite]
   colors = hcl(hues, 100, 65) # C and L Similar to ggplot
   # hues = seq(0, 1, length.out = nsite+1)[1:nsite]
   # colors = hsv(hues, 0.5, 1)
   xrange = range(x$time)
-  yrange = range(x$observed, x$modelled, na.rm=TRUE)
+  yrange = range(x$observed, x$fitted, na.rm=TRUE)
   plot(xrange,yrange, type='n', xlab="Time", ylab="Counts")
   for (i in 1: nsite) {
-    df = x[x$site == sites[i], ]
+    df = x[fsite == sites[i], ]
     points(df$time, df$observed, pch=16, col=colors[i])
-    lines(df$time, df$modelled, col=colors[i])
+    lines(df$time, df$fitted, col=colors[i])
   }
 }
 

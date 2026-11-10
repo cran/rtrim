@@ -197,9 +197,7 @@ trim <- function(object, ...) {
 }
 
 
-################################################################################
-#                                                                trim.data.frame
-################################################################################
+# trim.data.frame ----
 
 #' @param count_col    \code{[character]} name of the column holding species counts
 #' @param site_col     \code{[character]} name of the column holding the site id
@@ -233,6 +231,7 @@ trim <- function(object, ...) {
 #'   Used within the iterative model estimation algorithm.
 #'   The default value is \code{1e-5}.).
 #'   May be set to higher values in case models don't converge.}
+#' \item{\code{min_obs}}{Minimum number of positive observations per change point (default: 1). Increase if the model does not convergere due to sparse data sets.}
 #' \item{\code{max_iter}}{Number of iterations. Default value is \code{200}. May be set to higher values in case models don't converge.}
 #' \item{\code{alpha_method}}{Choose between a more precise (method 1) or a more robust (method 2) method to estimate site parameters alpha.
 #' The default is the the more precise method; but consider setting it to the more robust method 2 if method results in warnings.}
@@ -283,14 +282,14 @@ trim.data.frame <- function(object, count_col="count", site_col="site", year_col
   }
 
   if (is.null(covar_cols)) {
-    covars <- data.frame()
+    covars <- data.frame() # no covariates; empty covars data.frame
   } else if (length(covar_cols)==0) {
-    covars <- data.frame()
+    covars <- data.frame() # idem
   } else {
     for (covar_col in covar_cols) {
       stopifnot(covar_col %in% names(df))
     }
-    covars <- df[covar_cols]
+    covars <- df[covar_cols] # extract covariates from source data
   }
 
   # Check model specification and parameters
@@ -316,9 +315,7 @@ trim.data.frame <- function(object, count_col="count", site_col="site", year_col
                 ...)
 }
 
-################################################################################
-#                                                                   trim.formula
-################################################################################
+# trim.formula ----
 
 #' @param data \code{[data.frame]} Data frame containing at least counts, sites, and times
 #' @param weights \code{[character]} name of the column in \code{data} which respresents weights (optional)
@@ -435,9 +432,8 @@ trim.formula <- function(object, data=NULL, weights=NULL, ...)
       ...)
 }
 
-################################################################################
-#                                                               trim.trimcommand
-################################################################################
+
+# trim.trimcommand ----
 
 #' @rdname trim
 #' @method trim trimcommand
@@ -471,6 +467,7 @@ trim.trimcommand <- function(object, ...) {
                 , stepwise=tcf$stepwise
                 , autodelete=tcf$autodelete
                 , covin=covin
+                , BC=TRUE
                 , ...)
 }
 

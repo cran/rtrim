@@ -28,7 +28,7 @@ For everybody:
 
 For users of the original Windows TRIM software:
 \itemize{
-\item\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM users}
+\item\href{../doc/rtrim_for_TRIM_users.html}{rtrim for TRIM3 users}
 }
 
 For users who would like to have more insight what is going on under the hood:

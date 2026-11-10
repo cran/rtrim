@@ -2,7 +2,7 @@
 #
 # #TODO: use premove/penter in trim() calls
 
-# =============================================== Main refinement prodecure ====
+# =============================================== Main refinement procedure ====
 
 #' TRIM stepwise refinement
 #'
@@ -18,7 +18,7 @@
 #' @param premove threshold probability for removal of parameters.
 #' @param penter threshold probability for re-introduction of parameters.
 #'
-#' @return a list of class \code{trim}, that opcontains all output, statistiscs, etc.
+#' @return a list of class \code{trim}, that contains all output, statistics, etc.
 #'   Usually this information is retrieved by a set of postprocessing functions
 #'
 #' @keywords internal
@@ -33,6 +33,7 @@ trim_refine <- function(count, site, year, month, weights, covars,
   cur_cp <- org_cp
   z <- trim_workhorse(count, site, year, month, weights, covars,
                       model, changepoints=org_cp, ...)
+  use_months <- z$nmonth > 1
 
   # # Hack: remove all except the first changepoints
   # n <- length(org_cp)
@@ -72,9 +73,19 @@ trim_refine <- function(count, site, year, month, weights, covars,
 
     # Phase 2: try to re-insert previously removed changepoints
     alpha <- z$alpha
-    beta  <- z$beta
+    # (Take 'monthly' beta's into account)
+    nb  <- length(z$beta) # nr. of all beta's
+    if (use_months) {
+      nbM <- z$nmonth - 1L  # nr. of beta's associated with month factors
+      nbJ <- nb - nbM       # nr. of beta's associated with year factors / changepoints (and covariates)
+      Mbeta <- z$beta[(nbJ+1) : nb] # beta's associated with month factors
+    } else {
+      nbM <- 0
+      nbJ <- nb
+    }
+    Jbeta <- z$beta[1:nbJ]        # beta's associated with year factors
     nacp <- sum(active) # Number of active changpoints
-    beta <- matrix(z$beta, nacp) # vector matrix; columns are covariates
+    beta <- matrix(Jbeta, nacp) # vector matrix; columns are covariates
     p <- numeric(ncp)
     for (i in 1:ncp) if (active[i]==FALSE) {
       # deleted changepoints
@@ -98,7 +109,13 @@ trim_refine <- function(count, site, year, month, weights, covars,
       active_t[i] <- TRUE
       cp_t <- org_cp[active_t]
       idx <- c(rep(FALSE,num.active.before), TRUE, rep(FALSE, num.active.after))
-      p[i] <- Score(z, alpha, beta_t, cp_t, idx)
+      #browser()
+      if (use_months) {
+        all_beta <- rbind(beta_t, matrix(Mbeta)) # add month-factor beta's
+      } else {
+        all_beta <- beta_t
+      }
+      p[i] <- Score(z, alpha, all_beta, cp_t, idx) # was: beta_t
     } else p[i] = 1.0 # active changepoints
 
     # A changepoint is re-inserted if the minimum signficance is lower than a
@@ -139,13 +156,21 @@ Score <- function(z, alpha, beta, changepoints, index) {
   sig2  <- ifelse(is.null(z$sig2), 1.0, z$sig2)
   covars <- z$covars
   cvmat <- z$cvmat
-  nsite <- z$nsite
-  ntime <- z$ntime
+  I <- nsite <- z$nsite
+  J <- ntime <- z$ntime
+  M <- nmonth <- z$nmonth
   if (is.null(z$wt)) {
-    wt <- matrix(1.0, nsite, ntime)
+    wt <- matrix(1.0, nsite, ntime) # month dimension will be added later
   } else {
     wt <- z$wt
   }
+
+  # handle months
+  use.months <- z$nmonth > 1
+
+  # ensure matrices f and wt have a third 'month' dimension
+  if (length(dim(f))==2)  dim(f)  <- c(dim(f),  1)
+  if (length(dim(wt))==2) dim(wt) <- c(dim(wt), 1)
 
   ncp    <- length(changepoints)
   ncovar <- length(covars)
@@ -172,6 +197,16 @@ Score <- function(z, alpha, beta, changepoints, index) {
     if (cp2<ntime) B0[(cp2+1):ntime,i] <- B0[cp2,i]
   }
 
+  # Use multiple blocks in case of months
+  if (use.months) {
+    # First paste together M copies of B...
+    B0 <- do.call(rbind, replicate(M, B0, simplify=FALSE))
+    # ... then add links to the (M-1) month factors as well.
+    D <- matrix(rep(diag(M), each=J), J*M)
+    D <- D[ ,-1, drop=FALSE]
+    B0 <- cbind(B0, D) # combine year effects and month effects
+  }
+
   # Prepare for covariate contributions to $B$
   if (ncovar>0) {
     cvmask <- list()
@@ -193,12 +228,23 @@ Score <- function(z, alpha, beta, changepoints, index) {
     Rg <- rho ^ abs(row(diag(ntime)) - col(diag(ntime)))
   }
 
+  if (use.months) {
+    Rg0 <- Rg
+    Rg <- diag(ntime*nmonth)
+    idx <- 1:ntime
+    for (m in 1:nmonth) {
+      Rg[idx,idx] <- Rg0
+      idx <- idx + ntime
+    }
+  }
+
   # Compute score matrix
   U_b <- 0
   i_b <- 0
   for (i in 1:nsite) {
     # Select observations
-    f_i <- f[i, ]
+    # f_i <- f[i, ]
+    f_i <- as.vector(f[i,,])
     observed <- is.finite(f_i)
     f_i <- f_i[observed]
 
@@ -214,8 +260,10 @@ Score <- function(z, alpha, beta, changepoints, index) {
         }
       }
     }
+
+    # browser()
     # Compute mu
-    mu = exp(alpha[i] + B %*% beta) / wt[i, ]
+    mu = exp(alpha[i] + B %*% beta) / as.vector(wt[i,,])
     mu_i = mu[observed]
 
     d_mu_i <- diag(mu_i, length(mu_i)) # Length argument guarantees diag creation
@@ -244,6 +292,7 @@ Score <- function(z, alpha, beta, changepoints, index) {
   S <- t(U_b) %*% V %*% U_b
 
   df <- length(beta) / length(changepoints) # Number of beta-blocks (baseline+covariates)
+  df <- length(beta) / (length(changepoints) + nmonth - 1L)
   p <- 1 - pchisq(S, df=df)
   p
 }

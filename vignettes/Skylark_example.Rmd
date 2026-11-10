@@ -180,7 +180,8 @@ One may try to extend the model further by also incorporating the second covaria
 This covariate is a measure for the amount of acidic aerial deposition.
 This time, the time-effects model (model 3) cannot be estimated due to lack of data in particular years:
 ```{r}
-check_observations(skylark2, model=3, covars=c("habitat","deposition"))
+msg <- check_observations(skylark2, model=3, covars=c("habitat","deposition"))
+if (msg!="") print(msg)
 ```
 
 The linear trend model with covariates can still be estimated.

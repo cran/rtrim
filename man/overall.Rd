@@ -56,7 +56,7 @@ i.e., a \emph{strong increase (p<0.05)} takes precedence over a \emph{moderate i
 
 Note that the original TRIM erroneously assumed that the estimated overall trend
 magnitude is t-distributed, while in fact it is normally distributed, which is being used within rtrim.
-The option \code{bc=TRUE} can be set to force backward compability, for e.g. comparison purposes.
+The option \code{bc=TRUE} can be set to force backward compatability, for e.g. comparison purposes.
 }
 
 \examples{

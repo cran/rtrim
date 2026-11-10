@@ -15,7 +15,7 @@ Control how much output \code{\link{trim}} writes to the screen while
 fitting the model. By default, \code{trim} only returns the output
 and does not write any progress to the screen. After calling
 \code{set_trim_verbose(TRUE)}, \code{trim} will write information
-about running iterations and convergence to the screen during optmization.
+about running iterations and convergence to the screen during optimization.
 }
 \seealso{
 Other modelspec: 

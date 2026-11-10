@@ -1,2 +1,2 @@
-if( require("testthat") ) test_check("rtrim")
+if (require("testthat")) test_check("rtrim")
 
